@@ -102,11 +102,10 @@ export default function Home() {
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight">
-                <span className="text-[#00ff88]">Phish</span>
-                <span className="text-white">Guard</span>
-                <span className="text-[#00ccff]">Agent</span>
+                <span className="text-[#00ff88]">Threat</span>
+                <span className="text-white">Anylyzer</span>
               </h1>
-              <p className="text-xs text-gray-500">Threat Analysis Engine</p>
+              <p className="text-xs text-gray-500">v1.0 beta • by al0ke</p>
             </div>
           </div>
           
