@@ -88,14 +88,14 @@ export default function ThreatReport({ result }: ThreatReportProps) {
         </div>
       </div>
 
-      {/* AI Recommendations */}
+      {/* Threat Recommendations */
       <div className="bg-[#111119] rounded-xl border border-[#1a1a2e] overflow-hidden">
         <div className="bg-[#1a1a2e] px-4 py-3 flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-[#00ccff]/10 border border-[#00ccff]/30 flex items-center justify-center">
             <span className="text-xl">💡</span>
           </div>
           <div>
-            <h3 className="text-lg font-bold text-white">AI Recommendations</h3>
+            <h3 className="text-lg font-bold text-white">Threat Recommendations</h3>
             <p className="text-sm text-gray-400">Suggested actions based on analysis</p>
           </div>
         </div>

@@ -106,7 +106,7 @@ export default function Home() {
                 <span className="text-white">Guard</span>
                 <span className="text-[#00ccff]">Agent</span>
               </h1>
-              <p className="text-xs text-gray-500">AI-Powered Threat Analysis</p>
+              <p className="text-xs text-gray-500">Threat Analysis Engine</p>
             </div>
           </div>
           
@@ -126,17 +126,18 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-b from-[#00ff88]/5 to-transparent pointer-events-none" />
         <div className="max-w-6xl mx-auto px-4 py-16 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#1a1a2e] border border-[#2a2a3e] mb-6">
-            <span className="text-xs text-[#00ccff]">⚡ Powered by advanced threat intelligence</span>
+            <span className="text-xs text-[#00ccff]">⚡ Advanced threat intelligence engine</span>
           </div>
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            <span className="text-white">Detect </span>
-            <span className="text-[#ff3366]">Phishing </span>
-            <span className="text-white">Threats with </span>
-            <span className="text-[#00ff88]">AI</span>
+            <span className="text-white">Threat </span>
+            <span className="text-[#ff3366]">Anylyzer</span>
+            <span className="text-white"> by </span>
+            <span className="text-[#00ff88]">al0ke</span>
           </h2>
+          <p className="text-xs text-gray-500 mb-2">v1.0 beta</p>
           <p className="text-gray-400 text-lg max-w-2xl mx-auto mb-8">
             Analyze URLs, emails, and domains against multiple threat intelligence sources. 
-            Get instant verdicts with AI-powered recommendations.
+            Get instant verdicts with actionable recommendations.
           </p>
           <div className="flex items-center justify-center gap-8 text-sm">
             <div className="flex items-center gap-2 text-gray-400">
@@ -206,7 +207,7 @@ export default function Home() {
             },
             {
               icon: '🧠',
-              title: 'AI Verdict',
+              title: 'Threat Verdict',
               desc: 'Get intelligent threat assessments with confidence scores and recommendations'
             },
             {
@@ -229,8 +230,8 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t border-[#1a1a2e] py-8">
         <div className="max-w-6xl mx-auto px-4 text-center text-sm text-gray-500">
-          <p>PhishGuard Agent • AI-Powered Phishing Threat Analysis</p>
-          <p className="mt-2">Integrates with VirusTotal, URLhaus, and advanced brand impersonation detection</p>
+          <p>Threat Anylyzer v1.0 beta • Advanced Threat Analysis</p>
+          <p className="mt-2">Integrates with VirusTotal, URLhaus, and brand impersonation detection</p>
         </div>
       </footer>
     </div>

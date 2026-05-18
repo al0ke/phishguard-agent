@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'PhishGuard Agent | AI-Powered Phishing Threat Analysis',
-  description: 'Detect malicious URLs, email threats, and brand impersonation with AI-powered threat intelligence',
+  title: 'Threat Anylyzer by al0ke | v1.0 beta',
+  description: 'Detect malicious URLs, email threats, and brand impersonation with advanced threat intelligence',
   icons: {
     icon: '/favicon.svg',
   },

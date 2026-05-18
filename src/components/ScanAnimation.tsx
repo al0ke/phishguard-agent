@@ -14,7 +14,7 @@ const phases = [
   { id: 'virustotal', label: 'VirusTotal Lookup', icon: '🔍', duration: 1500 },
   { id: 'urlhaus', label: 'URLhaus Query', icon: '🛡️', duration: 1000 },
   { id: 'brand', label: 'Brand Detection', icon: '🏷️', duration: 800 },
-  { id: 'ai', label: 'AI Verdict Engine', icon: '🧠', duration: 1200 },
+  { id: 'ai', label: 'Threat Verdict Engine', icon: '🧠', duration: 1200 },
   { id: 'complete', label: 'Analysis Complete', icon: '✅', duration: 0 },
 ]
 
@@ -24,8 +24,8 @@ const terminalLines = [
   '> Extracting URLs, domains, and IP addresses...',
   '> Querying VirusTotal API...',
   '> Cross-referencing with URLhaus database...',
-  '> Running brand impersonation detection...',
-  '> Analyzing patterns with AI engine...',
+'  '> Running brand impersonation detection...',
+  '> Analyzing patterns with threat engine...',
   '> Generating threat assessment report...',
 ]
 
