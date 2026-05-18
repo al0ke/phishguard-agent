@@ -1,4 +1,4 @@
-const VIRUSTOTAL_API_KEY = 'REDACTED_VIRUSTOTAL_API_KEY'
+const VIRUSTOTAL_API_KEY='REDACTED_VIRUSTOTAL_API_KEY'
 
 export interface VirusTotalResult {
   malicious: number
@@ -17,25 +17,82 @@ export interface VirusTotalResult {
 
 export async function checkUrl(url: string): Promise<VirusTotalResult | null> {
   try {
-    // First, get the URL ID (hash of the URL)
-    const urlId = await getUrlId(url)
-    if (!urlId) return null
+    // Submit URL for analysis using V3 API
+    const submitResponse = await fetch('https://www.virustotal.com/api/v3/urls', {
+      method: 'POST',
+      headers: {
+        'x-apikey': VIRUSTOTAL_API_KEY,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: `url=${encodeURIComponent(url)}`,
+    })
 
-    // Fetch the report
-    const response = await fetch(`https://www.virustotal.com/api/v4/urls/${urlId}`, {
+    if (!submitResponse.ok) {
+      console.error('VirusTotal submission error:', submitResponse.status)
+      return null
+    }
+
+    const submitData = await submitResponse.json()
+    const analysisId = submitData.data?.id
+    
+    if (!analysisId) {
+      // URL was already in VT database - try to get the report directly
+      const urlHash = await hashString(url)
+      return await getUrlReport(urlHash)
+    }
+    
+    // Poll for results (wait a moment for VT to process)
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    // Extract the analysis UUID from the ID
+    const analysisUuid = analysisId.split('-')[0]
+    
+    const reportResponse = await fetch(`https://www.virustotal.com/api/v3/analyses/${analysisId}`, {
       headers: {
         'x-apikey': VIRUSTOTAL_API_KEY,
       },
     })
 
-    if (!response.ok) {
-      console.error('VirusTotal API error:', response.status)
+    if (!reportResponse.ok) {
+      console.error('VirusTotal report error:', reportResponse.status)
       return null
     }
 
-    const data = await response.json()
+    const reportData = await reportResponse.json()
+    const attributes = reportData.data?.attributes
     
+    if (!attributes) return null
+
+    const stats = attributes.stats || {}
+    
+    return {
+      malicious: stats.malicious || 0,
+      suspicious: stats.suspicious || 0,
+      harmless: stats.harmless || 0,
+      undetected: stats.undetected || 0,
+      last_analysis_date: attributes.date ? attributes.date.toString() : '',
+      ratio: `${(stats.malicious || 0) + (stats.suspicious || 0)}/${Object.values(stats).reduce((a: number, b: unknown) => a + (typeof b === 'number' ? b : 0), 0)}`,
+      vendor_results: attributes.results || {}
+    }
+  } catch (error) {
+    console.error('VirusTotal check failed:', error)
+    return null
+  }
+}
+
+async function getUrlReport(urlHash: string): Promise<VirusTotalResult | null> {
+  try {
+    const response = await fetch(`https://www.virustotal.com/api/v3/urls/${urlHash}`, {
+      headers: {
+        'x-apikey': VIRUSTOTAL_API_KEY,
+      },
+    })
+
+    if (!response.ok) return null
+
+    const data = await response.json()
     const attributes = data.data?.attributes
+
     if (!attributes) return null
 
     const lastAnalysisStats = attributes.last_analysis_stats || {}
@@ -50,39 +107,16 @@ export async function checkUrl(url: string): Promise<VirusTotalResult | null> {
       vendor_results: attributes.last_analysis_results || {}
     }
   } catch (error) {
-    console.error('VirusTotal check failed:', error)
-    return null
-  }
-}
-
-async function getUrlId(url: string): Promise<string | null> {
-  try {
-    // Submit URL for analysis
-    const response = await fetch('https://www.virustotal.com/api/v4/urls', {
-      method: 'POST',
-      headers: {
-        'x-apikey': VIRUSTOTAL_API_KEY,
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: `url=${encodeURIComponent(url)}`,
-    })
-
-    if (!response.ok) return null
-
-    const data = await response.json()
-    return data.data?.id || null
-  } catch (error) {
-    console.error('URL submission failed:', error)
+    console.error('VirusTotal get report failed:', error)
     return null
   }
 }
 
 export async function checkDomain(domain: string): Promise<VirusTotalResult | null> {
   try {
-    // Calculate MD5 hash of domain for API
     const domainHash = await hashString(domain)
     
-    const response = await fetch(`https://www.virustotal.com/api/v4/domains/${domainHash}`, {
+    const response = await fetch(`https://www.virustotal.com/api/v3/domains/${domainHash}`, {
       headers: {
         'x-apikey': VIRUSTOTAL_API_KEY,
       },
@@ -115,7 +149,7 @@ export async function checkDomain(domain: string): Promise<VirusTotalResult | nu
 async function hashString(str: string): Promise<string> {
   const encoder = new TextEncoder()
   const data = encoder.encode(str)
-  const hashBuffer = await crypto.subtle.digest('MD5', data)
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
   const hashArray = Array.from(new Uint8Array(hashBuffer))
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
 }
