@@ -35,64 +35,96 @@ export function detectBrandImpersonation(url: string, emailContent?: string): Br
     const urlObj = new URL(url)
     const hostname = urlObj.hostname.toLowerCase().replace(/^www\./, '')
     const pathParts = hostname.split('.')
+    const domainParts = hostname.split('.')
     
     // Check all possible domain combinations
     for (const brand of KNOWN_BRANDS) {
+      const brandNameLower = brand.name.toLowerCase()
+      
       for (const pattern of brand.patterns) {
         // Check if hostname contains the brand pattern
-        if (hostname.includes(pattern) && !hostname.includes(brand.name.toLowerCase())) {
+        if (hostname.includes(pattern)) {
+          // Exclude legitimate domains - check if it's exactly the brand domain or subdomain of it
+          const legitimateDomains = [
+            `${brandNameLower}.com`, `${brandNameLower}.org`, `${brandNameLower}.net`, 
+            `www.${brandNameLower}.com`, `mail.${brandNameLower}.com`,
+            `${brandNameLower}.co.uk`, `${brandNameLower}.io`
+          ]
+          
+          // Skip if hostname exactly matches or is a subdomain of the legitimate domain
+          if (legitimateDomains.some(legit => hostname === legit || hostname.endsWith('.' + legit))) {
+            continue
+          }
+          
+          // Skip if hostname is just the brand name with a normal TLD and no suspicious pattern
+          if (hostname === brandNameLower + '.com' || hostname === brandNameLower + '.org') {
+            // But flag it if the pattern has character substitution
+            if (pattern !== brandNameLower && pattern !== brandNameLower.replace(/\s/g, '')) {
+              // This is a spoof - character substitution variant of the brand
+            } else {
+              continue
+            }
+          }
+          
           // This is a potential lookalike
           const techniques: string[] = []
           
-          // Character replacement detection
-          if (pattern !== brand.name.toLowerCase()) {
-            const original = brand.name.toLowerCase()
-            const suspected = pattern
-            let differences = 0
-            let type = ''
+          // Character replacement detection - flag when pattern differs from brand name
+          if (pattern !== brandNameLower) {
+            // Check for character substitutions (0 for o, 1 for l, etc)
+            let hasSubstitution = false
+            const substitutions: Record<string, string[]> = {
+              'o': ['0'], 'l': ['1', 'i', 'I'], 'e': ['3'], 
+              'a': ['4', '@'], 's': ['5', '$'], 'i': ['1', 'l', '!'],
+              't': ['7'], 'b': ['8'], 'g': ['9']
+            }
             
-            for (let i = 0; i < suspected.length; i++) {
-              if (suspected[i] !== original[i]) {
-                differences++
-                if (/\d/.test(suspected[i])) type = 'numbers'
-                else if (suspected[i] === '0') type = 'zero for o'
-                else if (suspected[i] === '1' || suspected[i] === 'l') type = 'one for l'
-                else if (suspected[i] === '3') type = 'three for e'
-                else if (suspected[i] === 'i') type = 'i for j'
-                else type = 'character swap'
+            for (let i = 0; i < pattern.length; i++) {
+              const char = pattern[i]
+              const originalChar = brandNameLower[i]
+              if (char !== originalChar) {
+                hasSubstitution = true
               }
             }
             
-            if (differences > 0) {
-              techniques.push(`Character substitution (${type})`)
+            if (hasSubstitution) {
+              techniques.push('Character substitution (0 for o, 1 for l, etc)')
             }
           }
           
-          // Hyphenation detection
-          if (hostname.includes('-') && !hostname.includes(brand.name.toLowerCase())) {
-            techniques.push('Hyphenation attack')
+          // Hyphenation detection - brand name followed by hyphen is suspicious
+          if (hostname.startsWith(brandNameLower + '-') || hostname.startsWith(pattern + '-')) {
+            techniques.push('Hyphenation attack (brand-domain.tld)')
           }
           
-          // Subdomain detection
-          if (pathParts.length > 2 && hostname.startsWith(pattern)) {
-            techniques.push('Subdomain abuse')
+          // Subdomain detection - brand name as subdomain of unrelated domain
+          if (domainParts.length > 2) {
+            // Check if brand name appears as a subdomain (not the main domain)
+            const mainDomain = domainParts.slice(-2).join('.')
+            if (!mainDomain.includes(brandNameLower)) {
+              // Brand appears as subdomain - flag it
+              const maybeSubdomain = hostname.replace(/\.[^.]+\.[^.]+$/, '')
+              if (maybeSubdomain.includes(brandNameLower) || maybeSubdomain.includes(pattern)) {
+                techniques.push('Subdomain abuse (non-brand domain with brand subdomain)')
+              }
+            }
           }
           
-          // TLD spoofing
-          const suspiciousTLDs = ['xyz', 'top', 'club', 'online', 'site', 'website', 'work', 'ru', 'cn', 'tk', 'ml', 'ga', 'cf', 'gq']
+          // TLD spoofing - brand name with suspicious TLD
+          const suspiciousTLDs = ['xyz', 'top', 'club', 'online', 'site', 'website', 'work', 'ru', 'cn', 'tk', 'ml', 'ga', 'cf', 'gq', 'cc', 'pw', 'pro']
           const tld = hostname.split('.').pop()
-          if (tld && suspiciousTLDs.includes(tld) && !hostname.includes(brand.name.toLowerCase())) {
+          if (tld && suspiciousTLDs.includes(tld) && (hostname.includes(brandNameLower) || hostname.includes(pattern))) {
             techniques.push(`Suspicious TLD (.${tld})`)
           }
           
           if (techniques.length > 0) {
             matches.push({
               brand: brand.name,
-              original_domain: `${brand.name.toLowerCase()}.com`,
+              original_domain: `${brandNameLower}.com`,
               suspected_domain: hostname,
               risk_level: techniques.length >= 2 ? 'high' : techniques.length === 1 ? 'medium' : 'low',
               techniques,
-              similarity_score: calculateSimilarity(brand.name.toLowerCase(), pattern)
+              similarity_score: calculateSimilarity(brandNameLower, pattern)
             })
           }
         }
