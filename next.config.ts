@@ -1,7 +1,9 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  /* config options here */
-};
+  images: {
+    domains: ['www.virustotal.com', 'urlhaus-api.abuse.ch'],
+  },
+}
 
-export default nextConfig;
+export default nextConfig
