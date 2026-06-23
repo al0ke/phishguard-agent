@@ -24,7 +24,7 @@ const terminalLines = [
   '> Extracting URLs, domains, and IP addresses...',
   '> Querying VirusTotal API...',
   '> Cross-referencing with URLhaus database...',
-'  '> Running brand impersonation detection...',
+'  > Running brand impersonation detection...',
   '> Analyzing patterns with threat engine...',
   '> Generating threat assessment report...',
 ]
@@ -86,7 +86,7 @@ export default function ScanAnimation({ isScanning, scanPhase }: ScanAnimationPr
               <div className="w-3 h-3 rounded-full bg-[#ffcc00]" />
               <div className="w-3 h-3 rounded-full bg-[#00ff88]" />
             </div>
-            <span className="text-xs text-gray-400 ml-2">phishguard://scan terminal</span>
+            <span className="text-xs text-gray-400 ml-2">threat-analyzer://scan</span>
           </div>
           
           {isScanning && (

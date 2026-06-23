@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { checkUrl } from '../../../lib/virusTotal'
 import { checkURLhaus } from '../../../lib/urlhaus'
 import { detectBrandImpersonation, extractUrls } from '../../../lib/brandDetection'
+import { checkFeedMatches } from '../../../lib/feedMatch'
+import { detectPunycode, extractHostname, getDomainAge } from '../../../lib/urlSignals'
 
 interface AnalysisResult {
   timestamp: string
@@ -46,6 +48,24 @@ interface AnalysisResult {
     recommendations: string[]
     confidence: number
   }
+
+  feedMatch?: {
+    matched: boolean
+    sources: string[]
+    openphish: boolean
+    urlhaus: boolean
+  }
+  punycode?: {
+    suspicious: boolean
+    hostname: string
+    asciiHostname?: string
+    reason?: string
+  }
+  domainAge?: {
+    ageDays: number | null
+    created: string | null
+    registrar: string | null
+  }
 }
 
 function extractIOCs(text: string) {
@@ -79,7 +99,12 @@ function extractIOCs(text: string) {
 function calculateRiskScore(
   virusTotal: any,
   urlhaus: any,
-  brandMatches: any[]
+  brandMatches: any[],
+  extras?: {
+    feedMatch?: { matched: boolean }
+    punycode?: { suspicious: boolean }
+    domainAge?: { ageDays: number | null }
+  }
 ): { score: number; level: string } {
   let score = 0
   
@@ -103,6 +128,13 @@ function calculateRiskScore(
       return 5
     }, 0)
     score += maxRisk
+  }
+
+  if (extras?.feedMatch?.matched) score += 25
+  if (extras?.punycode?.suspicious) score += 15
+  if (extras?.domainAge?.ageDays !== null && extras?.domainAge?.ageDays !== undefined) {
+    if (extras.domainAge.ageDays < 7) score += 20
+    else if (extras.domainAge.ageDays < 30) score += 10
   }
   
   score = Math.min(score, 100)
@@ -135,6 +167,14 @@ function generateVerdict(result: AnalysisResult): AnalysisResult['aiVerdict'] {
     if (result.brandImpersonation && result.brandImpersonation.length > 0) {
       const brands = result.brandImpersonation.map((b: any) => b.brand).join(', ')
       summary += `Brand impersonation detected: ${brands}. `
+    }
+
+    if (result.feedMatch?.matched) {
+      summary += `Listed in live threat feed(s): ${result.feedMatch.sources.join(', ')}. `
+    }
+
+    if (result.punycode?.suspicious) {
+      summary += `Suspicious IDN/homograph domain detected. `
     }
     
     recommendations.push('DO NOT click or visit this URL')
@@ -221,11 +261,15 @@ export async function POST(request: NextRequest) {
     result.urlsAnalyzed = extractedUrls.length > 0 ? extractedUrls : [inputTrimmed]
     
     const primaryUrl = result.urlsAnalyzed[0]
+    const hostname = extractHostname(primaryUrl)
     
-    const [virusTotalResult, urlhausResult, brandMatches] = await Promise.all([
+    const [virusTotalResult, urlhausResult, brandMatches, feedMatch, punycodeCheck, domainAge] = await Promise.all([
       primaryUrl.startsWith('http') ? checkUrl(primaryUrl) : Promise.resolve(null),
       primaryUrl.startsWith('http') ? checkURLhaus(primaryUrl) : Promise.resolve(null),
-      Promise.resolve(detectBrandImpersonation(primaryUrl, inputTrimmed))
+      Promise.resolve(detectBrandImpersonation(primaryUrl, inputTrimmed)),
+      checkFeedMatches(primaryUrl),
+      Promise.resolve(detectPunycode(primaryUrl)),
+      hostname ? getDomainAge(hostname) : Promise.resolve({ ageDays: null, created: null, registrar: null }),
     ])
     
     if (virusTotalResult) {
@@ -257,14 +301,22 @@ export async function POST(request: NextRequest) {
         techniques: m.techniques
       }))
     }
+
+    result.feedMatch = feedMatch
+    if (punycodeCheck) result.punycode = punycodeCheck
+    if (hostname) result.domainAge = domainAge
     
     result.iocs = extractIOCs(inputTrimmed)
     
-    const riskResult = calculateRiskScore(result.virusTotal, result.urlhaus, brandMatches)
+    const riskResult = calculateRiskScore(result.virusTotal, result.urlhaus, brandMatches, {
+      feedMatch,
+      punycode: punycodeCheck || undefined,
+      domainAge,
+    })
     result.riskScore = riskResult.score
     result.threatLevel = riskResult.level as any
     
-    if (result.riskScore >= 60 || (result.virusTotal?.malicious || 0) > 5) {
+    if (result.riskScore >= 60 || (result.virusTotal?.malicious || 0) > 5 || feedMatch.matched) {
       result.overallVerdict = 'malicious'
     } else if (result.riskScore >= 30 || (result.virusTotal?.suspicious || 0) > 0 || brandMatches.length > 0) {
       result.overallVerdict = 'suspicious'

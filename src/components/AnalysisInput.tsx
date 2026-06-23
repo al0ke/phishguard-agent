@@ -1,15 +1,25 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 interface AnalysisInputProps {
   onAnalyze: (input: string) => Promise<void>
   isAnalyzing: boolean
+  prefill?: string | null
+  onPrefillConsumed?: () => void
 }
 
-export default function AnalysisInput({ onAnalyze, isAnalyzing }: AnalysisInputProps) {
+export default function AnalysisInput({ onAnalyze, isAnalyzing, prefill, onPrefillConsumed }: AnalysisInputProps) {
   const [input, setInput] = useState('')
   const [inputType, setInputType] = useState<'url' | 'email' | 'text'>('url')
+
+  useEffect(() => {
+    if (prefill) {
+      setInput(prefill)
+      setInputType(prefill.startsWith('http') ? 'url' : 'text')
+      onPrefillConsumed?.()
+    }
+  }, [prefill, onPrefillConsumed])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -17,19 +27,11 @@ export default function AnalysisInput({ onAnalyze, isAnalyzing }: AnalysisInputP
     await onAnalyze(input)
   }
 
-  const sampleUrls = [
-    'https://microsoft-verify.com/secure',
-    'http://paypa1-login.xyz/verify',
-    'https://amazon-security-alert.com/verify-account',
-  ]
-
   return (
     <div className="relative">
-      {/* Animated border glow */}
       <div className="absolute -inset-0.5 bg-gradient-to-r from-[#00ff88] via-[#00ccff] to-[#ff3366] rounded-xl blur opacity-30 animate-border-glow" />
       
       <form onSubmit={handleSubmit} className="relative bg-[#111119] rounded-xl p-6 border border-[#1a1a2e]">
-        {/* Header */}
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 rounded-lg bg-[#00ff88]/10 border border-[#00ff88]/30 flex items-center justify-center">
             <svg className="w-5 h-5 text-[#00ff88]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -42,14 +44,13 @@ export default function AnalysisInput({ onAnalyze, isAnalyzing }: AnalysisInputP
           </div>
         </div>
 
-        {/* Input type selector */}
         <div className="flex gap-2 mb-4">
           {(['url', 'email', 'text'] as const).map((type) => (
             <button
               key={type}
               type="button"
               onClick={() => setInputType(type)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`px-4 py-2 rounded-lg text-base font-medium transition-all ${
                 inputType === type
                   ? 'bg-[#00ff88]/20 text-[#00ff88] border border-[#00ff88]/50'
                   : 'bg-[#1a1a2e] text-gray-400 border border-transparent hover:text-white'
@@ -60,7 +61,6 @@ export default function AnalysisInput({ onAnalyze, isAnalyzing }: AnalysisInputP
           ))}
         </div>
 
-        {/* Input textarea */}
         <div className="relative">
           <textarea
             value={input}
@@ -72,57 +72,25 @@ export default function AnalysisInput({ onAnalyze, isAnalyzing }: AnalysisInputP
                 ? 'Paste email content here (including headers if available)...'
                 : 'Enter any text to analyze for threats...'
             }
-            className="w-full h-32 bg-[#0a0a0f] border border-[#1a1a2e] rounded-lg p-4 text-white placeholder-gray-500 focus:outline-none focus:border-[#00ff88]/50 focus:ring-1 focus:ring-[#00ff88]/20 resize-none font-mono text-sm"
+            className="w-full h-32 bg-[#0a0a0f] border border-[#1a1a2e] rounded-lg p-4 text-white placeholder-gray-500 focus:outline-none focus:border-[#00ff88]/50 focus:ring-1 focus:ring-[#00ff88]/20 resize-none font-mono text-base"
             disabled={isAnalyzing}
           />
           
-          {/* Character counter */}
-          <div className="absolute bottom-2 right-2 text-xs text-gray-500">
+          <div className="absolute bottom-2 right-2 text-sm text-gray-500">
             {input.length} chars
           </div>
         </div>
 
-        {/* Quick samples */}
-        <div className="mt-3 flex flex-wrap gap-2">
-          <span className="text-xs text-gray-500 mr-2">Quick test:</span>
-          {sampleUrls.map((url, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => setInput(url)}
-              className="text-xs px-3 py-1 rounded-full bg-[#1a1a2e] text-gray-400 hover:text-[#00ccff] hover:bg-[#1a1a2e]/80 transition-all border border-transparent hover:border-[#00ccff]/30"
-            >
-              {url.slice(0, 35)}...
-            </button>
-          ))}
-        </div>
-
-        {/* Submit button */}
         <button
           type="submit"
           disabled={!input.trim() || isAnalyzing}
-          className={`mt-4 w-full py-3 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 ${
+          className={`mt-4 w-full py-3.5 rounded-lg font-bold text-base transition-all flex items-center justify-center gap-2 ${
             !input.trim() || isAnalyzing
               ? 'bg-[#1a1a2e] text-gray-500 cursor-not-allowed'
               : 'bg-gradient-to-r from-[#00ff88] to-[#00ccff] text-black hover:shadow-lg hover:shadow-[#00ff88]/20'
           }`}
         >
-          {isAnalyzing ? (
-            <>
-              <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-              </svg>
-              Analyzing...
-            </>
-          ) : (
-            <>
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              Analyze Threat
-            </>
-          )}
+          {isAnalyzing ? 'Analyzing...' : 'Analyze Threat'}
         </button>
       </form>
     </div>

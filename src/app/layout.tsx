@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Threat Anylyzer by al0ke | v1.0 beta',
-  description: 'Detect malicious URLs, email threats, and brand impersonation with advanced threat intelligence',
+  title: 'ThreatAnalyzer v1.0',
+  description: 'Threat analysis engine — URL, domain, hash, email, WHOIS, and OSINT intelligence',
   icons: {
     icon: '/favicon.svg',
   },

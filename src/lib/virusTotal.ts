@@ -1,4 +1,4 @@
-const VIRUSTOTAL_API_KEY='REDACTED_VIRUSTOTAL_API_KEY'
+const VIRUSTOTAL_API_KEY = process.env.VIRUSTOTAL_API_KEY || ''
 
 export interface VirusTotalResult {
   malicious: number

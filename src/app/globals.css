@@ -8,6 +8,34 @@
   --cyber-bg: #0a0a0f;
   --cyber-card: #111119;
   --cyber-border: #1a1a2e;
+  --text-primary: #ffffff;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+  --input-bg: #0a0a0f;
+  --sidebar-bg: #0d0d14;
+  --accent: #00ff88;
+  --danger: #ff3366;
+  --warning: #ffcc00;
+  --info: #00ccff;
+}
+
+:root[data-theme="light"] {
+  --neon-green: #00a86b;
+  --neon-red: #e53935;
+  --neon-yellow: #f59e0b;
+  --neon-blue: #0288d1;
+  --cyber-bg: #f5f5f7;
+  --cyber-card: #ffffff;
+  --cyber-border: #e0e0e6;
+  --text-primary: #1a1a2e;
+  --text-secondary: #555560;
+  --text-muted: #9999a5;
+  --input-bg: #ffffff;
+  --sidebar-bg: #f0f0f5;
+  --accent: #00a86b;
+  --danger: #e53935;
+  --warning: #f59e0b;
+  --info: #0288d1;
 }
 
 * {
@@ -23,6 +51,8 @@ html {
 body {
   background: var(--cyber-bg);
   min-height: 100vh;
+  color: var(--text-primary);
+  font-size: 15px;
 }
 
 ::selection {
@@ -36,16 +66,16 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #111119;
+  background: var(--cyber-card);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2a2a3e;
+  background: var(--cyber-border);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #3a3a4e;
+  background: var(--text-muted);
 }
 
 @keyframes pulse-glow {
@@ -87,6 +117,11 @@ body {
   border-radius: 12px;
 }
 
+:root[data-theme="light"] .glass-card {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(224, 224, 230, 0.8);
+}
+
 .cyber-gradient {
   background: linear-gradient(135deg, rgba(0, 255, 136, 0.1) 0%, rgba(0, 204, 255, 0.1) 50%, rgba(255, 51, 102, 0.1) 100%);
 }
@@ -96,9 +131,17 @@ body {
   text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
 }
 
+:root[data-theme="light"] .neon-text-green {
+  text-shadow: none;
+}
+
 .neon-text-red {
   color: var(--neon-red);
   text-shadow: 0 0 10px rgba(255, 51, 102, 0.5);
+}
+
+:root[data-theme="light"] .neon-text-red {
+  text-shadow: none;
 }
 
 .neon-text-yellow {
@@ -106,7 +149,15 @@ body {
   text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
 }
 
+:root[data-theme="light"] .neon-text-yellow {
+  text-shadow: none;
+}
+
 .neon-text-blue {
   color: var(--neon-blue);
   text-shadow: 0 0 10px rgba(0, 204, 255, 0.5);
+}
+
+:root[data-theme="light"] .neon-text-blue {
+  text-shadow: none;
 }

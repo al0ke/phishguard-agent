@@ -1,10 +1,7 @@
 'use client'
 
-interface IOC {
-  type: string
-  value: string
-  source: string
-}
+import { useState, useEffect } from 'react'
+import type { InvestigateTab } from '@/lib/analyzerProps'
 
 interface IOCListProps {
   iocs: {
@@ -13,14 +10,15 @@ interface IOCListProps {
     urls: string[]
     hashes: string[]
   }
+  onInvestigate?: (tab: InvestigateTab, value: string) => void
 }
 
-export default function IOCList({ iocs }: IOCListProps) {
-  const allIocs: IOC[] = [
-    ...iocs.ips.map(ip => ({ type: 'IP', value: ip, source: 'Embedded' })),
-    ...iocs.domains.map(d => ({ type: 'Domain', value: d, source: 'Embedded' })),
-    ...iocs.urls.map(u => ({ type: 'URL', value: u, source: 'Embedded' })),
-    ...iocs.hashes.map(h => ({ type: 'Hash', value: h, source: 'Embedded' })),
+export default function IOCList({ iocs, onInvestigate }: IOCListProps) {
+  const allIocs = [
+    ...iocs.ips.map(ip => ({ type: 'IP' as const, value: ip, tab: 'ip' as InvestigateTab })),
+    ...iocs.domains.map(d => ({ type: 'Domain' as const, value: d, tab: 'domain' as InvestigateTab })),
+    ...iocs.urls.map(u => ({ type: 'URL' as const, value: u, tab: 'url' as InvestigateTab })),
+    ...iocs.hashes.map(h => ({ type: 'Hash' as const, value: h, tab: 'hash' as InvestigateTab })),
   ]
 
   const copyToClipboard = (text: string) => {
@@ -48,7 +46,7 @@ export default function IOCList({ iocs }: IOCListProps) {
     )
   }
 
-  const groupedIocs = {
+  const grouped = {
     URL: allIocs.filter(i => i.type === 'URL'),
     Domain: allIocs.filter(i => i.type === 'Domain'),
     IP: allIocs.filter(i => i.type === 'IP'),
@@ -66,23 +64,20 @@ export default function IOCList({ iocs }: IOCListProps) {
           </div>
           <div>
             <h3 className="text-lg font-bold text-white">IOC Extraction</h3>
-            <p className="text-sm text-gray-400">{allIocs.length} indicators found</p>
+            <p className="text-sm text-gray-400">{allIocs.length} indicators — click to investigate</p>
           </div>
         </div>
         
         <button
           onClick={() => copyToClipboard(JSON.stringify(iocs, null, 2))}
-          className="px-4 py-2 rounded-lg bg-[#00ccff]/10 text-[#00ccff] text-sm font-medium hover:bg-[#00ccff]/20 transition-all flex items-center gap-2"
+          className="px-4 py-2 rounded-lg bg-[#00ccff]/10 text-[#00ccff] text-sm font-medium hover:bg-[#00ccff]/20 transition-all"
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-          </svg>
           Export All
         </button>
       </div>
 
       <div className="p-4 space-y-4">
-        {Object.entries(groupedIocs).map(([type, items]) => (
+        {Object.entries(grouped).map(([type, items]) => (
           items.length > 0 && (
             <div key={type}>
               <div className="flex items-center gap-2 mb-2">
@@ -102,13 +97,32 @@ export default function IOCList({ iocs }: IOCListProps) {
                     key={i}
                     className="flex items-center justify-between bg-[#0a0a0f] rounded-lg px-3 py-2 border border-[#1a1a2e] group hover:border-[#00ccff]/30 transition-all"
                   >
-                    <code className="text-sm text-gray-300 truncate max-w-md">{ioc.value}</code>
+                    {onInvestigate ? (
+                      <button
+                        type="button"
+                        onClick={() => onInvestigate(ioc.tab, ioc.value)}
+                        className="text-sm text-[#00ccff] truncate max-w-md text-left hover:underline"
+                        title={`Investigate in ${ioc.tab} tab`}
+                      >
+                        {ioc.value}
+                      </button>
+                    ) : (
+                      <code className="text-sm text-gray-300 truncate max-w-md">{ioc.value}</code>
+                    )}
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-500">{ioc.source}</span>
+                      {onInvestigate && (
+                        <button
+                          type="button"
+                          onClick={() => onInvestigate(ioc.tab, ioc.value)}
+                          className="text-[10px] uppercase font-bold text-[#00ff88] opacity-0 group-hover:opacity-100"
+                        >
+                          Scan →
+                        </button>
+                      )}
                       <button
                         onClick={() => copyToClipboard(ioc.value)}
                         className="p-1 rounded hover:bg-[#1a1a2e] text-gray-400 hover:text-white transition-all opacity-0 group-hover:opacity-100"
-                        title="Copy to clipboard"
+                        title="Copy"
                       >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
