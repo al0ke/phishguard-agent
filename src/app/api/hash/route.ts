@@ -5,6 +5,13 @@ const VT_BASE = 'https://www.virustotal.com/api/v3'
 
 type HashType = 'MD5' | 'SHA1' | 'SHA256' | null
 
+interface VtEngineResult {
+  category: string
+  result: string
+  method: string
+  engine_name: string
+}
+
 function detectHashType(hash: string): HashType {
   const h = hash.trim().toLowerCase()
   if (/^[a-f0-9]{32}$/.test(h)) return 'MD5'
@@ -83,9 +90,9 @@ export async function POST(request: NextRequest) {
         const total = vals.reduce((a, b) => a + b, 0)
         return `${(stats.malicious || 0) + (stats.suspicious || 0)}/${total}`
       })(),
-      names: attrs?.last_analysis_results ? Object.entries(attrs.last_analysis_results)
-        .filter(([_, v]: [string, any]) => v.category !== 'harmless' && v.category !== 'undetected')
-        .map(([engine, v]: [string, any]) => ({ engine, result: v.result, category: v.category }))
+      names: attrs?.last_analysis_results ? Object.entries(attrs.last_analysis_results as Record<string, VtEngineResult>)
+        .filter(([, v]) => v.category !== 'harmless' && v.category !== 'undetected')
+        .map(([engine, v]) => ({ engine, result: v.result, category: v.category }))
         .slice(0, 20)
         : [],
     })

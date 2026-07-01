@@ -1,5 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+interface Registrant {
+  name?: string
+  org?: string
+  country?: string | null
+  nameservers?: string[]
+}
+
+interface CertEntry {
+  name_value?: string
+  ip_address?: string
+  not_before?: string
+  not_after?: string
+  issuer_name?: string
+}
+
 async function fetchWithTimeout(url: string, timeoutMs = 5000): Promise<Response | null> {
   try {
     const controller = new AbortController()
@@ -26,7 +41,8 @@ export async function POST(request: NextRequest) {
     const cleanDomain = domain.trim().toLowerCase().replace(/^https?:\/\//, '').split('/')[0]
 
     // RDAP first (fast, reliable) — 5s timeout
-    let registrar = null, created = null, updated = null, expires = null, registrant: any = {}
+    let registrar = null, created = null, updated = null, expires = null
+    const registrant: Registrant = {}
     let rdapOk = false
 
     const rdapRes = await fetchWithTimeout(`https://rdap.org/domain/${encodeURIComponent(cleanDomain)}`, 5000)
@@ -56,12 +72,12 @@ export async function POST(request: NextRequest) {
         }
         // Also check rdap.nameservers
         const nsArray = rdap.nameservers || []
-        registrant.nameservers = nsArray.map((ns: any) => ns.ldhName).filter(Boolean).slice(0, 10)
+        registrant.nameservers = nsArray.map((ns: { ldhName?: string }) => ns.ldhName).filter(Boolean).slice(0, 10)
       } catch { /* parse error, continue */ }
     }
 
     // crt.sh (slow, best-effort) — 4s timeout
-    let certs: any[] = []
+    let certs: CertEntry[] = []
     let certCount = 0
     const crtRes = await fetchWithTimeout(
       `https://crt.sh/?q=%25.${encodeURIComponent(cleanDomain)}&output=json`,
@@ -77,7 +93,7 @@ export async function POST(request: NextRequest) {
 
     // Extract subdomain hints from cert names
     const certNames = [...new Set(
-      certs.flatMap((c: any) => (c.name_value || '').split('\n')).filter(Boolean)
+      certs.flatMap((c) => (c.name_value || '').split('\n')).filter(Boolean)
     )].slice(0, 10)
 
     return NextResponse.json({
@@ -89,7 +105,7 @@ export async function POST(request: NextRequest) {
       registrant,
       nameservers: registrant.nameservers || certNames,
       cert_count: certCount,
-      recent_certs: certs.slice(0, 5).map((c: any) => ({
+      recent_certs: certs.slice(0, 5).map((c) => ({
         issued: c.not_before,
         expiry: c.not_after,
         issuer: c.issuer_name?.split(',')[0] || null,

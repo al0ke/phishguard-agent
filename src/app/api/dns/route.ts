@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-async function dnsLookup(name: string, type: string): Promise<any[]> {
+interface DnsRecord {
+  name: string
+  type: number
+  ttl: number
+  data: string
+}
+
+async function dnsLookup(name: string, type: string): Promise<DnsRecord[]> {
   try {
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), 5000)
@@ -11,7 +18,7 @@ async function dnsLookup(name: string, type: string): Promise<any[]> {
     clearTimeout(timer)
     if (!res.ok) return []
     const data = await res.json()
-    return (data.Answer || []).map((a: any) => ({
+    return (data.Answer || []).map((a: { name: string; type: number; TTL: number; data: string }) => ({
       name: a.name,
       type: a.type,
       ttl: a.TTL,
@@ -20,10 +27,6 @@ async function dnsLookup(name: string, type: string): Promise<any[]> {
   } catch {
     return []
   }
-}
-
-const TYPE_MAP: Record<string, number> = {
-  A: 1, NS: 2, CNAME: 5, MX: 15, TXT: 16, AAAA: 28, SOA: 6, PTR: 12, SRV: 33,
 }
 
 export async function POST(request: NextRequest) {
@@ -35,9 +38,9 @@ export async function POST(request: NextRequest) {
     }
 
     const cleanDomain = domain.trim().toLowerCase().replace(/^https?:\/\//, '').split('/')[0]
-    const queryTypes = types || ['A', 'MX', 'TXT', 'NS', 'AAAA']
+    const queryTypes: string[] = types || ['A', 'MX', 'TXT', 'NS', 'AAAA']
 
-    const results: Record<string, any[]> = {}
+    const results: Record<string, DnsRecord[]> = {}
     await Promise.all(queryTypes.map(async (type: string) => {
       results[type] = await dnsLookup(cleanDomain, type)
     }))
@@ -60,7 +63,7 @@ export async function POST(request: NextRequest) {
         hasMX: (results.MX?.length || 0) > 0,
         hasSPF: !!spf,
         hasDMARC: !!dmarc,
-        recordCount: Object.values(results).reduce((sum: number, arr: any[]) => sum + arr.length, 0),
+        recordCount: Object.values(results).reduce((sum: number, arr: DnsRecord[]) => sum + arr.length, 0),
       },
     })
   } catch (err) {

@@ -3,12 +3,37 @@
 import { useState, useEffect } from 'react'
 import { logAudit } from '@/lib/analystClient'
 import type { AnalyzerShellProps } from '@/lib/analyzerProps'
+import { LoadingState, ErrorState, EmptyState } from './StateViews'
+
+interface DnsRecord {
+  name: string
+  type: number
+  ttl: number
+  data: string
+}
+
+interface DnsResult {
+  domain: string
+  records: Record<string, DnsRecord[]>
+  spf: string | null
+  dmarc: string | null
+  dkim_selectors: string[]
+  summary: {
+    hasA: boolean
+    hasAAAA: boolean
+    hasMX: boolean
+    hasSPF: boolean
+    hasDMARC: boolean
+    recordCount: number
+  }
+  error?: string
+}
 
 export default function DnsLookup({ prefill, onPrefillConsumed }: AnalyzerShellProps) {
   const [domain, setDomain] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [result, setResult] = useState<Record<string, unknown> | null>(null)
+  const [result, setResult] = useState<DnsResult | null>(null)
 
   useEffect(() => {
     if (prefill) {
@@ -64,27 +89,26 @@ export default function DnsLookup({ prefill, onPrefillConsumed }: AnalyzerShellP
         </button>
       </form>
 
-      {error && <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-3 text-red-400 text-sm">{error}</div>}
+      {loading && <LoadingState message="Resolving A/MX/TXT/NS/AAAA records..." />}
+
+      {error && <ErrorState message={error} />}
 
       {result && (
         <div className="space-y-3">
           {/* Summary */}
           <div className="bg-[#111119] border border-[#1a1a2e] rounded-lg p-3">
             <div className="grid grid-cols-3 gap-2 text-center">
-              {['hasA', 'hasAAAA', 'hasMX', 'hasSPF', 'hasDMARC'].map((key) => {
-                const summary = result.summary as Record<string, unknown>
-                return (
-                  <div key={key}>
-                    <p className="text-xs text-gray-400">{key.replace('has', '')}</p>
-                    <p className={`text-sm font-bold ${summary[key] ? 'text-[#00ff88]' : 'text-[#ff3366]'}`}>
-                      {summary[key] ? '✓' : '✗'}
-                    </p>
-                  </div>
-                )
-              })}
+              {(['hasA', 'hasAAAA', 'hasMX', 'hasSPF', 'hasDMARC'] as const).map((key) => (
+                <div key={key}>
+                  <p className="text-xs text-gray-400">{key.replace('has', '')}</p>
+                  <p className={`text-sm font-bold ${result.summary[key] ? 'text-[#00ff88]' : 'text-[#ff3366]'}`}>
+                    {result.summary[key] ? '✓' : '✗'}
+                  </p>
+                </div>
+              ))}
               <div>
                 <p className="text-xs text-gray-400">Total</p>
-                <p className="text-sm font-bold text-white">{String((result.summary as Record<string, unknown>).recordCount ?? '')}</p>
+                <p className="text-sm font-bold text-white">{result.summary.recordCount}</p>
               </div>
             </div>
           </div>
@@ -93,7 +117,7 @@ export default function DnsLookup({ prefill, onPrefillConsumed }: AnalyzerShellP
           {result.spf ? (
             <div className="bg-[#111119] border border-[#1a1a2e] rounded-lg p-3">
               <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">SPF Record</p>
-              <p className="text-xs font-mono text-[#00ff88] break-all">{result.spf as string}</p>
+              <p className="text-xs font-mono text-[#00ff88] break-all">{result.spf}</p>
             </div>
           ) : null}
 
@@ -101,12 +125,12 @@ export default function DnsLookup({ prefill, onPrefillConsumed }: AnalyzerShellP
           {result.dmarc ? (
             <div className="bg-[#111119] border border-[#1a1a2e] rounded-lg p-3">
               <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">DMARC Record</p>
-              <p className="text-xs font-mono text-[#00ccff] break-all">{result.dmarc as string}</p>
+              <p className="text-xs font-mono text-[#00ccff] break-all">{result.dmarc}</p>
             </div>
           ) : null}
 
           {/* Records by type */}
-          {Object.entries(result.records || {}).map(([type, records]: [string, any]) => {
+          {Object.entries(result.records || {}).map(([type, records]) => {
             if (!records || records.length === 0) return null
             return (
               <div key={type} className="bg-[#111119] border border-[#1a1a2e] rounded-lg p-3">
@@ -115,7 +139,7 @@ export default function DnsLookup({ prefill, onPrefillConsumed }: AnalyzerShellP
                   <span className="text-xs text-gray-500">{records.length} records</span>
                 </div>
                 <div className="space-y-1">
-                  {records.map((r: any, i: number) => (
+                  {records.map((r, i) => (
                     <div key={i} className="text-xs font-mono text-gray-300 break-all">
                       {r.data}
                       {r.ttl && <span className="text-gray-600 ml-2">TTL:{r.ttl}</span>}
@@ -126,6 +150,10 @@ export default function DnsLookup({ prefill, onPrefillConsumed }: AnalyzerShellP
             )
           })}
         </div>
+      )}
+
+      {!loading && !error && !result && (
+        <EmptyState icon="DNS" title="No DNS lookup yet" description="Enter a domain to view its A, MX, TXT, NS, AAAA records plus SPF/DMARC status" />
       )}
     </div>
   )

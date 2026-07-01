@@ -14,6 +14,7 @@ export async function POST(request: NextRequest) {
         )
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- untyped Supabase client (no generated schema types)
       const { data, error } = await (supabase as any)
         .from('phishguard_audit')
         .insert({
@@ -57,6 +58,7 @@ export async function GET(request: NextRequest) {
     const level = searchParams.get('level')
     const limit = parseInt(searchParams.get('limit') || '100', 10)
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- untyped Supabase client (no generated schema types)
     let query = (supabase as any)
       .from('phishguard_audit')
       .select('*')

@@ -1,5 +1,7 @@
 'use client'
 
+import { memo } from 'react'
+
 interface ThreatReportProps {
   result: {
     timestamp: string
@@ -41,10 +43,21 @@ interface ThreatReportProps {
       recommendations: string[]
       confidence: number
     }
+    feedMatch?: {
+      matched: boolean
+      sources: string[]
+    }
+    punycode?: {
+      suspicious: boolean
+      reason?: string
+    }
+    domainAge?: {
+      ageDays: number | null
+    }
   }
 }
 
-export default function ThreatReport({ result }: ThreatReportProps) {
+function ThreatReport({ result }: ThreatReportProps) {
   const colorMap: Record<string, {bg: string, border: string, text: string}> = {
     malicious: { bg: 'bg-[#ff3366]/10', border: 'border-[#ff3366]/50', text: 'text-[#ff3366]' },
     suspicious: { bg: 'bg-[#ffcc00]/10', border: 'border-[#ffcc00]/50', text: 'text-[#ffcc00]' },
@@ -84,21 +97,21 @@ export default function ThreatReport({ result }: ThreatReportProps) {
         </div>
       </div>
 
-      {((result as { feedMatch?: { matched?: boolean; sources?: string[] } }).feedMatch?.matched ||
-        (result as { punycode?: { suspicious?: boolean; reason?: string } }).punycode?.suspicious ||
-        (result as { domainAge?: { ageDays?: number | null } }).domainAge?.ageDays != null) && (
+      {(result.feedMatch?.matched ||
+        result.punycode?.suspicious ||
+        result.domainAge?.ageDays != null) && (
         <div className="bg-[#111119] rounded-xl border border-[#ffcc00]/30 p-4 space-y-2">
           <h3 className="text-sm font-bold text-[#ffcc00] uppercase tracking-wide">Phishing Signals</h3>
-          {(result as { feedMatch?: { matched?: boolean; sources?: string[] } }).feedMatch?.matched && (
-            <p className="text-sm text-gray-300">Threat feed match: {(result as { feedMatch: { sources: string[] } }).feedMatch.sources.join(', ')}</p>
+          {result.feedMatch?.matched && (
+            <p className="text-sm text-gray-300">Threat feed match: {result.feedMatch.sources.join(', ')}</p>
           )}
-          {(result as { punycode?: { suspicious?: boolean; reason?: string } }).punycode?.suspicious && (
-            <p className="text-sm text-gray-300">{(result as { punycode: { reason?: string } }).punycode.reason || 'Suspicious IDN domain'}</p>
+          {result.punycode?.suspicious && (
+            <p className="text-sm text-gray-300">{result.punycode.reason || 'Suspicious IDN domain'}</p>
           )}
-          {(result as { domainAge?: { ageDays?: number | null } }).domainAge?.ageDays != null && (
+          {result.domainAge?.ageDays != null && (
             <p className="text-sm text-gray-300">
-              Domain age: {(result as { domainAge: { ageDays: number } }).domainAge.ageDays} days
-              {(result as { domainAge: { ageDays: number } }).domainAge.ageDays < 30 ? ' — recently registered' : ''}
+              Domain age: {result.domainAge.ageDays} days
+              {result.domainAge.ageDays < 30 ? ' — recently registered' : ''}
             </p>
           )}
         </div>
@@ -261,3 +274,5 @@ export default function ThreatReport({ result }: ThreatReportProps) {
     </div>
   )
 }
+
+export default memo(ThreatReport)

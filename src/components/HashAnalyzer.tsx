@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { logAudit, saveLastResult } from '@/lib/analystClient'
 import type { AnalyzerShellProps } from '@/lib/analyzerProps'
+import { LoadingState, ErrorState, EmptyState } from './StateViews'
 
 function detectType(hash: string): string {
   const h = hash.trim().toLowerCase()
@@ -12,11 +13,32 @@ function detectType(hash: string): string {
   return 'unknown'
 }
 
+interface HashDetection {
+  engine: string
+  result: string
+  category: string
+}
+
+interface HashResult {
+  hash: string
+  hashType: string | null
+  status: string
+  message?: string
+  malicious: number
+  suspicious: number
+  undetected: number
+  harmless: number
+  last_analysis_date: string | null
+  ratio: string
+  names?: HashDetection[]
+  error?: string
+}
+
 export default function HashAnalyzer({ prefill, onPrefillConsumed }: AnalyzerShellProps) {
   const [hash, setHash] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [result, setResult] = useState<Record<string, unknown> | null>(null)
+  const [result, setResult] = useState<HashResult | null>(null)
 
   useEffect(() => {
     if (prefill) {
@@ -90,7 +112,9 @@ export default function HashAnalyzer({ prefill, onPrefillConsumed }: AnalyzerShe
         </button>
       </form>
 
-      {error && <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-3 text-red-400 text-sm">{error}</div>}
+      {loading && <LoadingState message="Checking VirusTotal file reputation..." />}
+
+      {error && <ErrorState message={error} />}
 
       {result && (
         <div className="bg-[#111119] border border-[#1a1a2e] rounded-lg p-4 space-y-3">
@@ -117,11 +141,11 @@ export default function HashAnalyzer({ prefill, onPrefillConsumed }: AnalyzerShe
             <p className="text-sm text-gray-400">{result.message}</p>
           )}
 
-          {result.names?.length > 0 && (
+          {(result.names?.length ?? 0) > 0 && (
             <div>
               <p className="text-xs text-gray-400 mb-2 uppercase tracking-wide">Detections</p>
               <div className="space-y-1">
-                {result.names.map((n: any, i: number) => (
+                {result.names?.map((n, i) => (
                   <div key={i} className="flex justify-between text-xs">
                     <span className="text-gray-300 font-mono">{n.engine}</span>
                     <span className={n.category === 'malicious' ? 'text-[#ff3366]' : 'text-[#ffcc00]'}>{n.result}</span>
@@ -131,6 +155,10 @@ export default function HashAnalyzer({ prefill, onPrefillConsumed }: AnalyzerShe
             </div>
           )}
         </div>
+      )}
+
+      {!loading && !error && !result && (
+        <EmptyState icon="#" title="No hash lookup yet" description="Enter an MD5, SHA1, or SHA256 hash to check it against VirusTotal's file reputation database" />
       )}
     </div>
   )

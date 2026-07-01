@@ -98,18 +98,18 @@ export async function POST(request: NextRequest) {
       }
 
       const raw = await res.text()
-      let certs: any[] = []
+      let certs: Array<{ name_value?: string; ip_address?: string }> = []
       try { certs = JSON.parse(raw) } catch { /* empty */ }
 
       const subdomains = [...new Set(
         certs
-          .map((c: any) => c.name_value)
+          .map((c) => c.name_value || '')
           .flatMap((v: string) => v.split('\n'))
           .filter((v: string) => v.includes(clean))
           .map((v: string) => v.toLowerCase().replace(`.${clean}`, ''))
       )].filter(Boolean).slice(0, 30)
 
-      const ips = [...new Set(certs.map((c: any) => c.ip_address).filter(Boolean))]
+      const ips = [...new Set(certs.map((c) => c.ip_address).filter(Boolean))]
 
       return NextResponse.json({
         type: 'domain',

@@ -172,7 +172,7 @@ export default function QrCodeAnalyzer() {
             break
           }
         }
-      } catch (e) {
+      } catch {
         threatIndicators.push({
           type: 'suspicious_url',
           severity: 'low',

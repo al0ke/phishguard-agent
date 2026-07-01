@@ -22,7 +22,7 @@ async function resolveDomain(domain: string): Promise<string | null> {
       signal: AbortSignal.timeout(5000),
     })
     const data = await res.json()
-    const answer = data.Answer?.find((a: any) => a.type === 1)
+    const answer = data.Answer?.find((a: { type: number; data: string }) => a.type === 1)
     return answer ? answer.data : null
   } catch {
     return null
@@ -68,23 +68,9 @@ async function checkTalosBlocklist(ip: string): Promise<{ listed: boolean; sourc
   return { listed: false, source: 'FireHOL Level 1' }
 }
 
-async function checkUmbrellaClassification(domain: string): Promise<string | null> {
-  // Cisco Umbrella domain classification via DNS
-  // Query: <domain>.umbrella-api.com doesn't work without key
-  // Alternative: use categorify.io or just return domain category from public sources
-  try {
-    // Use Cisco Umbrella's public top 1 million + categorization
-    // For real-time, we'll use the domain's DNS records as a signal
-    return null
-  } catch {
-    return null
-  }
-}
-
 async function getDomainAge(domain: string): Promise<number | null> {
   // Try to get RDAP/WHOIS data for domain age
   try {
-    const tld = domain.split('.').pop()?.toLowerCase()
     const rdapServer = `https://rdap.org/domain/${encodeURIComponent(domain)}`
     const res = await fetch(rdapServer, {
       signal: AbortSignal.timeout(8000),
@@ -93,7 +79,7 @@ async function getDomainAge(domain: string): Promise<number | null> {
     if (!res.ok) return null
     const data = await res.json()
     const events = data.events || []
-    const registration = events.find((e: any) => e.eventAction === 'registration')
+    const registration = events.find((e: { eventAction?: string; eventDate?: string }) => e.eventAction === 'registration')
     if (registration?.eventDate) {
       const created = new Date(registration.eventDate)
       const now = new Date()
@@ -153,7 +139,6 @@ export async function POST(request: NextRequest) {
 
     const isMalicious = blocklistResult.listed
     const isSuspicious = !isMalicious && signals.length > 0
-    const isClean = !isMalicious && !isSuspicious
 
     const reputation = isMalicious ? 'Malicious' : isSuspicious ? 'Suspicious' : 'Clean'
     const severity = isMalicious ? 'malicious' : isSuspicious ? 'suspicious' : 'clean'

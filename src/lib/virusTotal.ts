@@ -43,10 +43,7 @@ export async function checkUrl(url: string): Promise<VirusTotalResult | null> {
     
     // Poll for results (wait a moment for VT to process)
     await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // Extract the analysis UUID from the ID
-    const analysisUuid = analysisId.split('-')[0]
-    
+
     const reportResponse = await fetch(`https://www.virustotal.com/api/v3/analyses/${analysisId}`, {
       headers: {
         'x-apikey': VIRUSTOTAL_API_KEY,

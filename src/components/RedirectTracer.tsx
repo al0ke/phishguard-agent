@@ -3,12 +3,32 @@
 import { useState, useEffect } from 'react'
 import { logAudit, saveLastResult } from '@/lib/analystClient'
 import type { AnalyzerShellProps } from '@/lib/analyzerProps'
+import { LoadingState, ErrorState, EmptyState } from './StateViews'
+
+interface RedirectHop {
+  url: string
+  status: number
+  redirect: string | null
+}
+
+interface RedirectResult {
+  originalUrl: string
+  finalUrl: string
+  hops: RedirectHop[]
+  hopCount: number
+  securityHeaders: Record<string, string | null>
+  hasSecurityIssues: boolean
+  riskScore: number
+  findings: string[]
+  threatLevel: string
+  error?: string
+}
 
 export default function RedirectTracer({ prefill, onPrefillConsumed, onInvestigate }: AnalyzerShellProps) {
   const [url, setUrl] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [result, setResult] = useState<Record<string, unknown> | null>(null)
+  const [result, setResult] = useState<RedirectResult | null>(null)
 
   useEffect(() => {
     if (prefill) {
@@ -77,7 +97,9 @@ export default function RedirectTracer({ prefill, onPrefillConsumed, onInvestiga
         </button>
       </form>
 
-      {error && <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-3 text-red-400 text-sm">{error}</div>}
+      {loading && <LoadingState message="Following redirect chain and inspecting security headers..." />}
+
+      {error && <ErrorState message={error} />}
 
       {result && (
         <div className="space-y-3">
@@ -86,20 +108,20 @@ export default function RedirectTracer({ prefill, onPrefillConsumed, onInvestiga
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-gray-400">FINAL DESTINATION</p>
-                <p className="text-sm font-mono text-white break-all">{result.finalUrl as string}</p>
+                <p className="text-sm font-mono text-white break-all">{result.finalUrl}</p>
               </div>
               <div className="text-right">
                 <p className="text-xs text-gray-400">HOPS</p>
-                <p className="text-2xl font-bold text-[#00ff88]">{result.hopCount as number}</p>
+                <p className="text-2xl font-bold text-[#00ff88]">{result.hopCount}</p>
               </div>
             </div>
             <div className="mt-2 flex items-center gap-2 flex-wrap">
               <span className="text-xs text-gray-400">Risk:</span>
-              <span className={`text-xs font-bold ${(result.riskScore as number) >= 70 ? 'text-[#ff3366]' : (result.riskScore as number) >= 40 ? 'text-[#ffcc00]' : 'text-[#00ff88]'}`}>
-                {result.riskScore as number}/100 — {(result.threatLevel as string)?.toUpperCase()}
+              <span className={`text-xs font-bold ${result.riskScore >= 70 ? 'text-[#ff3366]' : result.riskScore >= 40 ? 'text-[#ffcc00]' : 'text-[#00ff88]'}`}>
+                {result.riskScore}/100 — {result.threatLevel?.toUpperCase()}
               </span>
               {onInvestigate && result.finalUrl && (
-                <button type="button" onClick={() => onInvestigate('url', result.finalUrl as string)} className="text-[10px] text-[#00ccff] underline">
+                <button type="button" onClick={() => onInvestigate('url', result.finalUrl)} className="text-[10px] text-[#00ccff] underline">
                   Scan final URL →
                 </button>
               )}
@@ -111,7 +133,7 @@ export default function RedirectTracer({ prefill, onPrefillConsumed, onInvestiga
             <div className="bg-[#111119] border border-[#1a1a2e] rounded-lg p-3">
               <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">Redirect Chain</p>
               <div className="space-y-1">
-                {result.hops.map((hop: any, i: number) => (
+                {result.hops.map((hop, i) => (
                   <div key={i} className="flex items-start gap-2 text-xs">
                     <span className="text-gray-500 font-mono mt-0.5">{i + 1}.</span>
                     <div className="flex-1 min-w-0">
@@ -135,7 +157,7 @@ export default function RedirectTracer({ prefill, onPrefillConsumed, onInvestiga
           <div className="bg-[#111119] border border-[#1a1a2e] rounded-lg p-3">
             <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">Security Headers</p>
             <div className="space-y-1">
-              {Object.entries(result.securityHeaders || {}).map(([key, value]: [string, any]) => (
+              {Object.entries(result.securityHeaders || {}).map(([key, value]) => (
                 <div key={key} className="flex items-center justify-between text-xs">
                   <span className="text-gray-400 font-mono">{key}</span>
                   <span className={value ? 'text-[#00ff88]' : 'text-[#ff3366]'}>
@@ -158,6 +180,10 @@ export default function RedirectTracer({ prefill, onPrefillConsumed, onInvestiga
             </div>
           )}
         </div>
+      )}
+
+      {!loading && !error && !result && (
+        <EmptyState icon="↗" title="No redirect trace yet" description="Enter a URL to follow its full redirect chain and inspect security headers on the final destination" />
       )}
     </div>
   )

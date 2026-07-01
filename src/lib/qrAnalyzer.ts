@@ -270,7 +270,7 @@ function analyzeUrl(urlString: string): { indicators: ThreatIndicator[]; isSuspi
       }
     }
     
-  } catch (e) {
+  } catch {
     indicators.push({
       type: 'suspicious_url',
       severity: 'low',

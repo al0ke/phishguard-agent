@@ -2,8 +2,18 @@
 
 import { useState, useEffect } from 'react'
 
+interface AuditEntry {
+  timestamp: string
+  tool: string
+  target: string
+  riskScore: number | null
+  threatLevel: string
+  mitreTags?: string[]
+  user?: string
+}
+
 export default function AuditLog() {
-  const [entries, setEntries] = useState<any[]>([])
+  const [entries, setEntries] = useState<AuditEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('')
   const [levelFilter, setLevelFilter] = useState('')
@@ -117,9 +127,9 @@ export default function AuditLog() {
                     <span className={`text-[10px] font-bold uppercase ${levelColor(e.threatLevel)}`}>{e.threatLevel}</span>
                   </td>
                   <td className="px-2 py-2">
-                    {e.mitreTags?.length > 0 ? (
+                    {(e.mitreTags?.length ?? 0) > 0 ? (
                       <div className="flex flex-wrap gap-1">
-                        {e.mitreTags.map((t: string) => (
+                        {e.mitreTags?.map((t: string) => (
                           <span key={t} className="text-[9px] font-mono text-[#cc99ff] bg-[#cc99ff]/10 px-1 py-0.5 rounded">{t}</span>
                         ))}
                       </div>

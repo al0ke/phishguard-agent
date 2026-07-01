@@ -4,12 +4,26 @@ import { useState, useRef } from 'react'
 import jsQR from 'jsqr'
 import { logAudit, saveLastResult } from '@/lib/analystClient'
 import type { AnalyzerShellProps } from '@/lib/analyzerProps'
+import { LoadingState, ErrorState, EmptyState } from './StateViews'
+
+interface QrAnalysis {
+  riskScore: number
+  threatLevel: string
+  overallVerdict?: string
+  iocs?: { ips: string[]; domains: string[]; urls: string[]; hashes: string[] }
+}
+
+interface QrScanResult {
+  qrUrl: string | null
+  text?: string
+  analysis?: QrAnalysis | null
+}
 
 export default function QrAnalyzer({ onInvestigate }: AnalyzerShellProps) {
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [result, setResult] = useState<any>(null)
+  const [result, setResult] = useState<QrScanResult | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -118,8 +132,12 @@ export default function QrAnalyzer({ onInvestigate }: AnalyzerShellProps) {
         <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
       </div>
 
-      {loading && <p className="text-sm text-[#00ff88] text-center">Decoding QR code...</p>}
-      {error && <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-3 text-red-400 text-sm">{error}</div>}
+      {loading && <LoadingState message="Decoding QR code and scanning destination..." />}
+      {error && <ErrorState message={error} />}
+
+      {!loading && !error && !result && !imageUrl && (
+        <EmptyState icon="📷" title="No QR code scanned yet" description="Upload a QR code image to decode it and automatically analyze any embedded URL" />
+      )}
 
       {result && (
         <div className="space-y-3">
@@ -128,7 +146,7 @@ export default function QrAnalyzer({ onInvestigate }: AnalyzerShellProps) {
               <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Decoded URL</p>
               <p className="text-sm font-mono text-[#00ff88] break-all">{result.qrUrl}</p>
               {onInvestigate && (
-                <button type="button" onClick={() => onInvestigate('url', result.qrUrl)} className="text-xs text-[#00ccff] underline mt-2">
+                <button type="button" onClick={() => onInvestigate('url', result.qrUrl as string)} className="text-xs text-[#00ccff] underline mt-2">
                   Investigate URL in URL Scan →
                 </button>
               )}

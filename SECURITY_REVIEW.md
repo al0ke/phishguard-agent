@@ -1,9 +1,9 @@
 # Security Review — Analyst Toolkit v2.0
 
-**Date:** June 18, 2026
+**Date:** June 18, 2026 (updated July 1, 2026 — audit pass)
 **Application:** Analyst Toolkit v2.0 (formerly ThreatAnalyzer)
 **Deployment:** phishguard-plum.vercel.app
-**Authentication:** HTTP Basic Auth (middleware.ts)
+**Authentication:** HTTP Basic Auth (proxy.ts — renamed from middleware.ts per Next.js 16 convention)
 **Stack:** Next.js 16, TypeScript, Tailwind CSS
 
 ---
@@ -28,13 +28,15 @@
 
 | Key | Location | Required |
 |-----|----------|----------|
-| `VIRUSTOTAL_API_KEY` | Vercel env var / `.env` (gitignored) | Yes — Hash + URL scan |
-| `FIRECRAWL_API_KEY` | Vercel env var / `.env` (gitignored) | No — OSINT works on free tier without key |
+| `VIRUSTOTAL_API_KEY` | Vercel env var / `.env` (gitignored, not committed) | Yes — Hash + URL scan |
+| `FIRECRAWL_API_KEY` | Vercel env var / `.env` (gitignored, not committed) | No — OSINT works on free tier without key |
+| `SUPABASE_URL` / `SUPABASE_SERVICE_KEY` | Vercel env var / `.env` (gitignored, not committed) | No — Audit Log falls back to a clear "not configured" message |
 
-- `.env` is in `.gitignore` (line 34) — never committed
-- `.env.example` exists with placeholder values for documentation
-- Previous hardcoded VT key has been removed from all source files
-- No keys are exposed to the client — all API calls happen server-side in Next.js API routes
+- `.env*` files are in `.gitignore` — never committed, and none exist in the repository
+- Previous hardcoded VT key has been removed from all source files (verified via repo-wide grep during the July 2026 audit — no matches)
+- No keys are exposed to the client — all `process.env` reads happen only in server-side files (API routes and `src/lib/*`), none are prefixed `NEXT_PUBLIC_`, and none are imported into `'use client'` components
+- `/api/ip-reputation` (new) uses ip-api.com's free tier, which requires no API key
+- TypeScript build error checking is now enforced (`ignoreBuildErrors: false`), reducing the risk of unsafe `any`-typed data reaching security-relevant logic undetected
 
 ---
 

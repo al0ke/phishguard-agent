@@ -187,13 +187,6 @@ function getHeader(headers: ParsedHeader[], name: string): string | undefined {
   return h ? h.value : undefined
 }
 
-/** Get all header values for a given name */
-function getAllHeaders(headers: ParsedHeader[], name: string): string[] {
-  return headers
-    .filter(h => h.name.toLowerCase() === name.toLowerCase())
-    .map(h => h.value)
-}
-
 /** Parse Content-Type header into { value, params } */
 function parseContentType(headerValue: string): {
   value: string
