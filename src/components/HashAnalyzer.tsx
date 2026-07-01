@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { logAudit, saveLastResult } from '@/lib/analystClient'
 import type { AnalyzerShellProps } from '@/lib/analyzerProps'
+import { LoadingState, ErrorState, EmptyState } from './StateViews'
 
 function detectType(hash: string): string {
   const h = hash.trim().toLowerCase()
@@ -111,7 +112,9 @@ export default function HashAnalyzer({ prefill, onPrefillConsumed }: AnalyzerShe
         </button>
       </form>
 
-      {error && <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-3 text-red-400 text-sm">{error}</div>}
+      {loading && <LoadingState message="Checking VirusTotal file reputation..." />}
+
+      {error && <ErrorState message={error} />}
 
       {result && (
         <div className="bg-[#111119] border border-[#1a1a2e] rounded-lg p-4 space-y-3">
@@ -152,6 +155,10 @@ export default function HashAnalyzer({ prefill, onPrefillConsumed }: AnalyzerShe
             </div>
           )}
         </div>
+      )}
+
+      {!loading && !error && !result && (
+        <EmptyState icon="#" title="No hash lookup yet" description="Enter an MD5, SHA1, or SHA256 hash to check it against VirusTotal's file reputation database" />
       )}
     </div>
   )

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import RiskGauge from './RiskGauge'
 
 interface BreachResult {
   email: string
@@ -53,7 +52,7 @@ export default function BreachCheck() {
 
       const data = await response.json()
       setResult(data)
-    } catch (err) {
+    } catch {
       setError('Failed to check breach database. Please try again.')
     } finally {
       setIsLoading(false)

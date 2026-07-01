@@ -3,12 +3,54 @@
 import { useState, useEffect } from 'react'
 import { logAudit, saveLastResult } from '@/lib/analystClient'
 import type { AnalyzerShellProps } from '@/lib/analyzerProps'
+import { ErrorState, EmptyState } from './StateViews'
+
+interface DomainWhois {
+  registrar?: string | null
+  created?: string | null
+  expires?: string | null
+  registrant?: { country?: string; org?: string }
+  cert_count?: number
+  nameservers?: string[]
+  rdap_found?: boolean
+  rdap_url?: string | null
+  error?: string
+}
+
+interface DomainOsint {
+  title?: string | null
+  techStack?: string[]
+  emails?: string[]
+  externalDomains?: string[]
+  error?: string
+}
+
+interface DomainEnrich {
+  subdomains?: string[]
+  relatedIPs?: string[]
+  error?: string
+}
+
+interface BrandMatch {
+  brand: string
+  similarity: number
+  homoglyphUsed: boolean
+  distance: number
+}
+
+interface DomainBrand {
+  isImpersonation?: boolean
+  matches?: BrandMatch[]
+  riskLevel?: string
+  homoglyphsDetected?: boolean
+  error?: string
+}
 
 interface DomainResult {
-  whois?: Record<string, any>
-  osint?: Record<string, any>
-  enrich?: Record<string, any>
-  brand?: Record<string, any>
+  whois?: DomainWhois
+  osint?: DomainOsint
+  enrich?: DomainEnrich
+  brand?: DomainBrand
 }
 
 export default function DomainAnalyzer({ prefill, onPrefillConsumed }: AnalyzerShellProps) {
@@ -29,14 +71,14 @@ export default function DomainAnalyzer({ prefill, onPrefillConsumed }: AnalyzerS
       const findings: string[] = []
       if (r.whois?.registrar) findings.push(`Registrar: ${r.whois.registrar}`)
       if (r.whois?.created) findings.push(`Domain created: ${r.whois.created}`)
-      if (r.brand?.isImpersonation) findings.push(`Brand impersonation: ${r.brand.matches[0]?.brand} (${r.brand.matches[0]?.similarity}% match)`)
+      if (r.brand?.isImpersonation) findings.push(`Brand impersonation: ${r.brand.matches?.[0]?.brand} (${r.brand.matches?.[0]?.similarity}% match)`)
       if (r.brand?.homoglyphsDetected) findings.push('Homoglyphs detected in domain name')
-      if ((r.enrich as { subdomains?: unknown[] })?.subdomains?.length) findings.push(`${(r.enrich as { subdomains: unknown[] }).subdomains.length} subdomains discovered`)
+      if (r.enrich?.subdomains?.length) findings.push(`${r.enrich.subdomains.length} subdomains discovered`)
 
-      const riskScore = (r.brand as { isImpersonation?: boolean; matches?: { similarity?: number }[] })?.isImpersonation
-        ? ((r.brand as { matches: { similarity?: number }[] }).matches[0]?.similarity ?? 0) >= 85 ? 90 : 60
+      const riskScore = r.brand?.isImpersonation
+        ? (r.brand.matches?.[0]?.similarity ?? 0) >= 85 ? 90 : 60
         : 20
-      const threatLevel = ((r.brand as { riskLevel?: string })?.riskLevel) || 'low'
+      const threatLevel = r.brand?.riskLevel || 'low'
 
       await logAudit({ tool: 'DOMAIN', target, riskScore, threatLevel, findings })
 
@@ -48,8 +90,8 @@ export default function DomainAnalyzer({ prefill, onPrefillConsumed }: AnalyzerS
         threatLevel,
         findings,
         recommendations: [
-          (r.brand as { isImpersonation?: boolean })?.isImpersonation ? 'Flag as brand impersonation — block domain' : null,
-          (r.whois as { created?: string })?.created && new Date((r.whois as { created: string }).created) > new Date(Date.now() - 30 * 86400000) ? 'Newly registered domain — high risk' : null,
+          r.brand?.isImpersonation ? 'Flag as brand impersonation — block domain' : null,
+          r.whois?.created && new Date(r.whois.created) > new Date(Date.now() - 30 * 86400000) ? 'Newly registered domain — high risk' : null,
         ].filter(Boolean),
         iocs: { ips: [], domains: [target], urls: [], hashes: [] },
         raw: r,
@@ -96,7 +138,7 @@ export default function DomainAnalyzer({ prefill, onPrefillConsumed }: AnalyzerS
         </button>
       </form>
 
-      {error && <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-3 text-red-400 text-sm">{error}</div>}
+      {error && <ErrorState message={error} />}
 
       {loading && (
         <div className="bg-[#111119] border border-[#1a1a2e] rounded-lg p-4 text-center">
@@ -121,9 +163,9 @@ export default function DomainAnalyzer({ prefill, onPrefillConsumed }: AnalyzerS
               <h3 className={`text-sm font-bold mb-3 uppercase tracking-wide ${result.brand.isImpersonation ? 'text-[#ff3366]' : 'text-[#00ff88]'}`}>
                 {result.brand.isImpersonation ? '⚠ BRAND IMPERSONATION' : 'BRAND CHECK'}
               </h3>
-              {result.brand.matches?.length > 0 ? (
+              {(result.brand.matches?.length ?? 0) > 0 ? (
                 <div className="space-y-2">
-                  {result.brand.matches.map((m: any, i: number) => (
+                  {result.brand.matches?.map((m, i) => (
                     <div key={i} className="flex items-center justify-between text-sm">
                       <div>
                         <span className="text-white font-mono">{m.brand}</span>
@@ -155,10 +197,10 @@ export default function DomainAnalyzer({ prefill, onPrefillConsumed }: AnalyzerS
                   <><span className="text-gray-400">Status</span><span className="text-[#ffcc00]">RDAP lookup failed — limited data</span></>
                 )}
               </div>
-              {result.whois.nameservers?.length > 0 && (
+              {(result.whois.nameservers?.length ?? 0) > 0 && (
                 <div className="mt-2">
                   <span className="text-gray-400 text-sm">NS: </span>
-                  {result.whois.nameservers.slice(0, 3).map((ns: string) => (
+                  {result.whois.nameservers?.slice(0, 3).map((ns: string) => (
                     <span key={ns} className="inline-block mr-2 text-xs font-mono text-[#00ccff] bg-[#00ccff]/10 px-2 py-0.5 rounded">{ns}</span>
                   ))}
                 </div>
@@ -180,18 +222,18 @@ export default function DomainAnalyzer({ prefill, onPrefillConsumed }: AnalyzerS
             <div className="bg-[#111119] border border-[#1a1a2e] rounded-lg p-4">
               <h3 className="text-sm font-bold text-[#00ff88] mb-3 uppercase tracking-wide">OSINT</h3>
               {result.osint.title && <p className="text-white text-sm mb-2">{result.osint.title}</p>}
-              {result.osint.techStack?.length > 0 && (
+              {(result.osint.techStack?.length ?? 0) > 0 && (
                 <div className="flex flex-wrap gap-1 mb-2">
-                  {result.osint.techStack.map((t: string) => (
+                  {result.osint.techStack?.map((t: string) => (
                     <span key={t} className="text-xs font-mono text-[#ff9900] bg-[#ff9900]/10 px-2 py-0.5 rounded">{t}</span>
                   ))}
                 </div>
               )}
-              {result.osint.emails?.length > 0 && (
-                <div className="text-sm"><span className="text-gray-400">Emails: </span>{result.osint.emails.join(', ')}</div>
+              {(result.osint.emails?.length ?? 0) > 0 && (
+                <div className="text-sm"><span className="text-gray-400">Emails: </span>{result.osint.emails?.join(', ')}</div>
               )}
-              {result.osint.externalDomains?.length > 0 && (
-                <div className="text-sm mt-1"><span className="text-gray-400">External links: </span><span className="text-[#00ccff]">{result.osint.externalDomains.length}</span></div>
+              {(result.osint.externalDomains?.length ?? 0) > 0 && (
+                <div className="text-sm mt-1"><span className="text-gray-400">External links: </span><span className="text-[#00ccff]">{result.osint.externalDomains?.length}</span></div>
               )}
             </div>
           )}
@@ -200,9 +242,9 @@ export default function DomainAnalyzer({ prefill, onPrefillConsumed }: AnalyzerS
           {result.enrich && !result.enrich.error && (
             <div className="bg-[#111119] border border-[#1a1a2e] rounded-lg p-4">
               <h3 className="text-sm font-bold text-[#00ff88] mb-3 uppercase tracking-wide">SUBDOMAINS ({result.enrich.subdomains?.length || 0})</h3>
-              {result.enrich.subdomains?.length > 0 ? (
+              {(result.enrich.subdomains?.length ?? 0) > 0 ? (
                 <div className="flex flex-wrap gap-1">
-                  {result.enrich.subdomains.slice(0, 20).map((s: string) => (
+                  {result.enrich.subdomains?.slice(0, 20).map((s: string) => (
                     <span key={s} className="text-xs font-mono text-[#cc99ff] bg-[#cc99ff]/10 px-2 py-0.5 rounded">{s}</span>
                   ))}
                 </div>
@@ -210,6 +252,10 @@ export default function DomainAnalyzer({ prefill, onPrefillConsumed }: AnalyzerS
             </div>
           )}
         </div>
+      )}
+
+      {!loading && !error && !result && (
+        <EmptyState icon="🌐" title="No domain analysis yet" description="Enter a domain to run WHOIS, OSINT, brand-impersonation, and subdomain discovery in parallel" />
       )}
     </div>
   )

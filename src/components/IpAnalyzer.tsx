@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { logAudit, saveLastResult } from '@/lib/analystClient'
 import type { AnalyzerShellProps } from '@/lib/analyzerProps'
+import { LoadingState, ErrorState, EmptyState } from './StateViews'
 
 interface IpEnrichResult {
   type: 'ip'
@@ -85,7 +86,9 @@ export default function IpAnalyzer({ prefill, onPrefillConsumed }: AnalyzerShell
         </button>
       </form>
 
-      {error && <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-3 text-red-400 text-sm">{error}</div>}
+      {loading && <LoadingState message="Querying Shodan InternetDB for open ports and CVEs..." />}
+
+      {error && <ErrorState message={error} />}
 
       {result && (
         <div className="space-y-3">
@@ -167,10 +170,14 @@ export default function IpAnalyzer({ prefill, onPrefillConsumed }: AnalyzerShell
           {!result.ports?.length && !result.cves?.length && !result.tags?.length && (
             <div className="bg-[#111119] border border-[#1a1a2e] rounded-lg p-4 text-center">
               <p className="text-sm text-gray-400">No threat data found for this IP</p>
-              <p className="text-xs text-gray-600 mt-1">This doesn't mean it's safe — just not in threat databases</p>
+              <p className="text-xs text-gray-600 mt-1">This doesn&apos;t mean it&apos;s safe — just not in threat databases</p>
             </div>
           )}
         </div>
+      )}
+
+      {!loading && !error && !result && (
+        <EmptyState icon="🌐" title="No IP lookup yet" description="Enter an IP address to check open ports, known CVEs, and Shodan classification tags" />
       )}
     </div>
   )

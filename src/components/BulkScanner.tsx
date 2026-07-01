@@ -3,11 +3,21 @@
 import { useState, useEffect } from 'react'
 import { logAudit } from '@/lib/analystClient'
 import type { AnalyzerShellProps } from '@/lib/analyzerProps'
+import { EmptyState } from './StateViews'
+
+interface BulkScanResult {
+  target: string
+  type: string
+  riskScore: number
+  threatLevel: string
+  verdict: string
+  iocCount: number
+}
 
 export default function BulkScanner({ prefill, onPrefillConsumed, onInvestigate }: AnalyzerShellProps) {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
-  const [results, setResults] = useState<any[]>([])
+  const [results, setResults] = useState<BulkScanResult[]>([])
   const [progress, setProgress] = useState('')
 
   useEffect(() => {
@@ -26,7 +36,7 @@ export default function BulkScanner({ prefill, onPrefillConsumed, onInvestigate 
     setResults([])
     setProgress(`Scanning ${lines.length} indicators...`)
 
-    const scanned: any[] = []
+    const scanned: BulkScanResult[] = []
 
     for (let i = 0; i < lines.length; i++) {
       const target = lines[i]
@@ -91,10 +101,15 @@ export default function BulkScanner({ prefill, onPrefillConsumed, onInvestigate 
           className="w-full bg-[#0a0a0f] border border-[#1a1a2e] rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#00ff88]/50 font-mono text-sm resize-y"
           disabled={loading}
         />
-        <button type="submit" disabled={!input.trim() || loading} className="w-full py-3 rounded-lg bg-[#00ff88] text-black font-bold text-sm disabled:opacity-50">
+        <button type="submit" disabled={!input.trim() || loading} className="w-full py-3 rounded-lg bg-[#00ff88] text-black font-bold text-sm disabled:opacity-50 flex items-center justify-center gap-2">
+          {loading && <span className="inline-block w-3.5 h-3.5 border-2 border-black/40 border-t-black rounded-full animate-spin" />}
           {loading ? progress : '⚡ Bulk Scan'}
         </button>
       </form>
+
+      {!loading && results.length === 0 && (
+        <EmptyState icon="⚡" title="No bulk scan yet" description="Paste one URL, IP, or domain per line to scan them all in sequence against VirusTotal, URLhaus, and threat feeds" />
+      )}
 
       {results.length > 0 && (
         <div className="space-y-3">

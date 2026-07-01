@@ -1,12 +1,29 @@
 'use client'
 
 import { useState } from 'react'
+import { LoadingState, ErrorState, EmptyState } from './StateViews'
 
-export default function OsintScraper({ onResult }: { onResult: (r: any) => void }) {
+interface OsintResult {
+  url: string
+  title: string | null
+  description: string | null
+  author?: string | null
+  published?: string | null
+  emails: string[]
+  social: Record<string, string[]>
+  externalDomains: string[]
+  techStack: string[]
+  linkCount: number
+  markdown: string
+  ogImage?: string | null
+  error?: string
+}
+
+export default function OsintScraper({ onResult }: { onResult: (r: OsintResult) => void }) {
   const [url, setUrl] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [result, setResult] = useState<any>(null)
+  const [result, setResult] = useState<OsintResult | null>(null)
 
   const scrape = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -52,7 +69,9 @@ export default function OsintScraper({ onResult }: { onResult: (r: any) => void 
         </button>
       </form>
 
-      {error && <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-3 text-red-400 text-sm">{error}</div>}
+      {loading && <LoadingState message="Scraping page content and metadata..." />}
+
+      {error && <ErrorState message={error} />}
 
       {result && (
         <div className="space-y-3">
@@ -93,7 +112,7 @@ export default function OsintScraper({ onResult }: { onResult: (r: any) => void 
           {Object.keys(result.social || {}).length > 0 && (
             <div className="bg-[#111119] border border-[#1a1a2e] rounded-lg p-3">
               <p className="text-xs text-gray-400 mb-2 uppercase tracking-wide">SOCIAL</p>
-              {Object.entries(result.social).map(([platform, links]: [string, any]) => (
+              {Object.entries(result.social).map(([platform, links]) => (
                 <div key={platform} className="text-xs mb-1">
                   <span className="text-gray-400 capitalize">{platform}: </span>
                   {links.map((l: string) => <a key={l} href={l} target="_blank" className="text-[#00ff88] font-mono ml-1">{l.slice(0, 50)}</a>)}
@@ -117,9 +136,13 @@ export default function OsintScraper({ onResult }: { onResult: (r: any) => void 
             <div className="bg-[#111119] border border-[#1a1a2e] rounded-lg p-3">
               <p className="text-xs text-gray-400 mb-2 uppercase tracking-wide">MARKDOWN PREVIEW</p>
               <pre className="text-xs text-gray-400 font-mono whitespace-pre-wrap overflow-x-auto max-h-60">{result.markdown.slice(0, 1000)}</pre>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
+      </div>
+    )}
+
+      {!loading && !error && !result && (
+        <EmptyState icon="🕵" title="No OSINT scrape yet" description="Enter a URL to extract page metadata, emails, social links, and tech stack" />
       )}
     </div>
   )

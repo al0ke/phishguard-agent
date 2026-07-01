@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { logAudit } from '@/lib/analystClient'
 import type { AnalyzerShellProps } from '@/lib/analyzerProps'
+import { LoadingState, ErrorState, EmptyState } from './StateViews'
 
 interface WhoisRegistrant {
   name?: string
@@ -87,7 +88,9 @@ export default function WhoisLookup({ prefill, onPrefillConsumed }: AnalyzerShel
         </button>
       </form>
 
-      {error && <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-3 text-red-400 text-sm">{error}</div>}
+      {loading && <LoadingState message="Querying RDAP and certificate transparency logs..." />}
+
+      {error && <ErrorState message={error} />}
 
       {result && !result.error && (
         <div className="bg-[#111119] border border-[#1a1a2e] rounded-lg p-4 space-y-2">
@@ -153,7 +156,11 @@ export default function WhoisLookup({ prefill, onPrefillConsumed }: AnalyzerShel
         </div>
       )}
 
-      {result?.error && <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-3 text-red-400 text-sm">{result.error}</div>}
+      {result?.error && <ErrorState message={result.error} />}
+
+      {!loading && !error && !result && (
+        <EmptyState icon="📋" title="No WHOIS lookup yet" description="Enter a domain to view registrar, registration dates, nameservers, and SSL certificate history" />
+      )}
     </div>
   )
 }

@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import { logAudit, saveLastResult, saveTriageSession } from '@/lib/analystClient'
 import type { AnalyzerShellProps } from '@/lib/analyzerProps'
+import { LoadingState, ErrorState, EmptyState } from './StateViews'
 
 function generateExplanation(r: Record<string, unknown>): string {
   if (!r) return ''
@@ -347,7 +348,9 @@ export default function EmailAnalyzer({ onInvestigate }: AnalyzerShellProps) {
         </button>
       </form>
 
-      {error && <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-3 text-red-400 text-sm">{error}</div>}
+      {loading && <LoadingState message={mode === 'headers' ? 'Analyzing headers for spoofing indicators...' : 'Analyzing email for phishing indicators...'} />}
+
+      {error && <ErrorState message={error} />}
 
       {triageResult && (
         <div className="bg-[#00ccff]/10 border border-[#00ccff]/40 rounded-lg p-4 space-y-2">
@@ -430,6 +433,10 @@ export default function EmailAnalyzer({ onInvestigate }: AnalyzerShellProps) {
             )
           })()}
         </div>
+      )}
+
+      {!loading && !triageLoading && !error && !result && !headerResult && !triageResult && (
+        <EmptyState icon="✉" title="No email analyzed yet" description="Enter a sender domain, paste raw email content, upload a file, or check headers to detect phishing indicators" />
       )}
     </div>
   )

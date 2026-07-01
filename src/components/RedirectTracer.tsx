@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { logAudit, saveLastResult } from '@/lib/analystClient'
 import type { AnalyzerShellProps } from '@/lib/analyzerProps'
+import { LoadingState, ErrorState, EmptyState } from './StateViews'
 
 interface RedirectHop {
   url: string
@@ -96,7 +97,9 @@ export default function RedirectTracer({ prefill, onPrefillConsumed, onInvestiga
         </button>
       </form>
 
-      {error && <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-3 text-red-400 text-sm">{error}</div>}
+      {loading && <LoadingState message="Following redirect chain and inspecting security headers..." />}
+
+      {error && <ErrorState message={error} />}
 
       {result && (
         <div className="space-y-3">
@@ -177,6 +180,10 @@ export default function RedirectTracer({ prefill, onPrefillConsumed, onInvestiga
             </div>
           )}
         </div>
+      )}
+
+      {!loading && !error && !result && (
+        <EmptyState icon="↗" title="No redirect trace yet" description="Enter a URL to follow its full redirect chain and inspect security headers on the final destination" />
       )}
     </div>
   )

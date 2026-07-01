@@ -2,9 +2,32 @@
 
 import { useState, useEffect, useMemo } from 'react'
 
+interface FeedEntry {
+  cve?: string
+  vendor?: string
+  product?: string
+  name?: string
+  date?: string
+  severity?: string
+  url?: string
+  domain?: string | null
+  path?: string | null
+  status?: string
+  threat?: string | null
+}
+
+interface FeedBucket {
+  count?: number
+  title?: string
+  recent?: FeedEntry[]
+  error?: string
+}
+
+type FeedsData = Partial<Record<'cisa' | 'openphish' | 'urlhaus', FeedBucket>>
+
 export default function ThreatFeeds() {
   const [loading, setLoading] = useState(true)
-  const [feeds, setFeeds] = useState<any>(null)
+  const [feeds, setFeeds] = useState<FeedsData | null>(null)
   const [activeFeed, setActiveFeed] = useState<'cisa' | 'openphish' | 'urlhaus'>('cisa')
   const [search, setSearch] = useState('')
 
@@ -21,7 +44,7 @@ export default function ThreatFeeds() {
   const filteredEntries = useMemo(() => {
     if (!feedData?.recent || !search.trim()) return feedData?.recent || []
     const q = search.toLowerCase().trim()
-    return feedData.recent.filter((item: any) => {
+    return feedData.recent.filter((item: FeedEntry) => {
       if (activeFeed === 'cisa') {
         return item.cve?.toLowerCase().includes(q) ||
                item.vendor?.toLowerCase().includes(q) ||
@@ -111,7 +134,7 @@ export default function ThreatFeeds() {
             {search ? `Search Results (${filteredEntries.length})` : 'Recent Entries'}
           </p>
           <div className="space-y-1.5 max-h-80 overflow-y-auto">
-            {filteredEntries.map((item: any, i: number) => (
+            {filteredEntries.map((item: FeedEntry, i: number) => (
               <div key={i} className="border-b border-[#1a1a2e] pb-1.5 mb-1.5 last:border-0">
                 {activeFeed === 'cisa' && (
                   <div>
@@ -152,7 +175,7 @@ export default function ThreatFeeds() {
       )}
 
       {feedData?.error && (
-        <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-3 text-red-400 text-sm">
+        <div className="bg-[#ff3366]/10 border border-[#ff3366]/50 rounded-lg p-3 text-[#ff3366] text-sm">
           {feedData.error}
         </div>
       )}
