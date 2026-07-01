@@ -12,11 +12,32 @@ function detectType(hash: string): string {
   return 'unknown'
 }
 
+interface HashDetection {
+  engine: string
+  result: string
+  category: string
+}
+
+interface HashResult {
+  hash: string
+  hashType: string | null
+  status: string
+  message?: string
+  malicious: number
+  suspicious: number
+  undetected: number
+  harmless: number
+  last_analysis_date: string | null
+  ratio: string
+  names?: HashDetection[]
+  error?: string
+}
+
 export default function HashAnalyzer({ prefill, onPrefillConsumed }: AnalyzerShellProps) {
   const [hash, setHash] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [result, setResult] = useState<Record<string, unknown> | null>(null)
+  const [result, setResult] = useState<HashResult | null>(null)
 
   useEffect(() => {
     if (prefill) {
@@ -117,11 +138,11 @@ export default function HashAnalyzer({ prefill, onPrefillConsumed }: AnalyzerShe
             <p className="text-sm text-gray-400">{result.message}</p>
           )}
 
-          {result.names?.length > 0 && (
+          {(result.names?.length ?? 0) > 0 && (
             <div>
               <p className="text-xs text-gray-400 mb-2 uppercase tracking-wide">Detections</p>
               <div className="space-y-1">
-                {result.names.map((n: any, i: number) => (
+                {result.names?.map((n, i) => (
                   <div key={i} className="flex justify-between text-xs">
                     <span className="text-gray-300 font-mono">{n.engine}</span>
                     <span className={n.category === 'malicious' ? 'text-[#ff3366]' : 'text-[#ffcc00]'}>{n.result}</span>

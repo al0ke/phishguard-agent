@@ -2,15 +2,17 @@ import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
   images: {
-    domains: ['www.virustotal.com', 'urlhaus-api.abuse.ch'],
+    // `images.domains` is deprecated in Next.js 16 in favor of `remotePatterns`
+    remotePatterns: [
+      { protocol: 'https', hostname: 'www.virustotal.com' },
+      { protocol: 'https', hostname: 'urlhaus-api.abuse.ch' },
+    ],
   },
   typescript: {
-    // Build even if there are type errors — they're all pre-existing `unknown` type issues in older components
-    ignoreBuildErrors: true,
+    // Type checking is enforced during build — see AGENTS.md for the fixed type errors.
+    ignoreBuildErrors: false,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  // Next.js 16 removed the `eslint` build option. Run `npm run lint` separately (ESLint CLI).
 }
 
 export default nextConfig

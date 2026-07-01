@@ -370,7 +370,7 @@ export default function EmailAnalyzer({ onInvestigate }: AnalyzerShellProps) {
               ))}
             </div>
           )}
-          {headerResult.replyToAnalysis && !(headerResult.replyToAnalysis as { matchesFrom?: boolean }).matchesFrom && (
+          {Boolean(headerResult.replyToAnalysis) && !(headerResult.replyToAnalysis as { matchesFrom?: boolean })?.matchesFrom && (
             <p className="text-xs text-[#ff3366]">Reply-To mismatch detected — possible BEC</p>
           )}
         </div>

@@ -4,11 +4,26 @@ import { useState, useEffect } from 'react'
 import { logAudit, saveLastResult } from '@/lib/analystClient'
 import type { AnalyzerShellProps } from '@/lib/analyzerProps'
 
+interface IpEnrichResult {
+  type: 'ip'
+  query: string
+  ip: string
+  ports: number[]
+  hostnames: string[]
+  tags: string[]
+  cves: string[]
+  country: string | null
+  asn: string | null
+  summary?: string | null
+  message?: string
+  error?: string
+}
+
 export default function IpAnalyzer({ prefill, onPrefillConsumed }: AnalyzerShellProps) {
   const [ip, setIp] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [result, setResult] = useState<Record<string, unknown> | null>(null)
+  const [result, setResult] = useState<IpEnrichResult | null>(null)
 
   useEffect(() => {
     if (prefill) {

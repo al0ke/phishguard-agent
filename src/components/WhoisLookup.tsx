@@ -4,11 +4,39 @@ import { useState, useEffect } from 'react'
 import { logAudit } from '@/lib/analystClient'
 import type { AnalyzerShellProps } from '@/lib/analyzerProps'
 
+interface WhoisRegistrant {
+  name?: string
+  org?: string
+  country?: string
+  nameservers?: string[]
+}
+
+interface WhoisCert {
+  issued: string | null
+  expiry: string | null
+  issuer: string | null
+}
+
+interface WhoisResult {
+  domain: string
+  registrar: string | null
+  created: string | null
+  updated: string | null
+  expires: string | null
+  registrant: WhoisRegistrant
+  nameservers: string[]
+  cert_count: number
+  recent_certs: WhoisCert[]
+  rdap_url: string | null
+  rdap_found: boolean
+  error?: string
+}
+
 export default function WhoisLookup({ prefill, onPrefillConsumed }: AnalyzerShellProps) {
   const [domain, setDomain] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [result, setResult] = useState<Record<string, unknown> | null>(null)
+  const [result, setResult] = useState<WhoisResult | null>(null)
 
   useEffect(() => {
     if (prefill) {
@@ -109,7 +137,7 @@ export default function WhoisLookup({ prefill, onPrefillConsumed }: AnalyzerShel
           {result.recent_certs?.length > 0 && (
             <div className="mt-3">
               <p className="text-xs text-gray-400 mb-1 uppercase tracking-wide">Recent SSL</p>
-              {result.recent_certs.map((c: any, i: number) => (
+              {result.recent_certs.map((c, i) => (
                 <div key={i} className="text-xs font-mono text-gray-400">
                   {c.issuer?.slice(0,40) || 'Unknown'} | {c.issued ? new Date(c.issued).toLocaleDateString() : '?'} → {c.expiry ? new Date(c.expiry).toLocaleDateString() : '?'}
                 </div>
