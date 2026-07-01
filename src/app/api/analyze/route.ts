@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { checkUrl } from '../../../lib/virusTotal'
 import { checkURLhaus } from '../../../lib/urlhaus'
-import { detectBrandImpersonation, extractUrls } from '../../../lib/brandDetection'
+import { detectBrandImpersonation, extractUrls, type BrandMatch } from '../../../lib/brandDetection'
 import { checkFeedMatches } from '../../../lib/feedMatch'
 import { detectPunycode, extractHostname, getDomainAge } from '../../../lib/urlSignals'
 
@@ -97,9 +97,9 @@ function extractIOCs(text: string) {
 }
 
 function calculateRiskScore(
-  virusTotal: any,
-  urlhaus: any,
-  brandMatches: any[],
+  virusTotal: AnalysisResult['virusTotal'],
+  urlhaus: AnalysisResult['urlhaus'],
+  brandMatches: BrandMatch[],
   extras?: {
     feedMatch?: { matched: boolean }
     punycode?: { suspicious: boolean }
@@ -122,7 +122,7 @@ function calculateRiskScore(
   }
   
   if (brandMatches.length > 0) {
-    const maxRisk = brandMatches.reduce((max: number, match: any) => {
+    const maxRisk = brandMatches.reduce((max: number, match) => {
       if (match.risk_level === 'high') return 20
       if (match.risk_level === 'medium') return 15
       return 5
@@ -165,7 +165,7 @@ function generateVerdict(result: AnalysisResult): AnalysisResult['aiVerdict'] {
     }
     
     if (result.brandImpersonation && result.brandImpersonation.length > 0) {
-      const brands = result.brandImpersonation.map((b: any) => b.brand).join(', ')
+      const brands = result.brandImpersonation.map((b) => b.brand).join(', ')
       summary += `Brand impersonation detected: ${brands}. `
     }
 
@@ -191,7 +191,7 @@ function generateVerdict(result: AnalysisResult): AnalysisResult['aiVerdict'] {
     summary = `SUSPICIOUS ACTIVITY: This ${result.inputType} shows concerning indicators with a risk score of ${result.riskScore}/100. `
     
     if (result.brandImpersonation && result.brandImpersonation.length > 0) {
-      const brands = result.brandImpersonation.map((b: any) => b.brand).join(', ')
+      const brands = result.brandImpersonation.map((b) => b.brand).join(', ')
       summary += `Potential ${brands} brand impersonation detected. `
     }
     
@@ -293,7 +293,7 @@ export async function POST(request: NextRequest) {
     }
     
     if (brandMatches.length > 0) {
-      result.brandImpersonation = brandMatches.map((m: any) => ({
+      result.brandImpersonation = brandMatches.map((m) => ({
         brand: m.brand,
         originalDomain: m.original_domain,
         suspectedDomain: m.suspected_domain,
@@ -314,7 +314,7 @@ export async function POST(request: NextRequest) {
       domainAge,
     })
     result.riskScore = riskResult.score
-    result.threatLevel = riskResult.level as any
+    result.threatLevel = riskResult.level as AnalysisResult['threatLevel']
     
     if (result.riskScore >= 60 || (result.virusTotal?.malicious || 0) > 5 || feedMatch.matched) {
       result.overallVerdict = 'malicious'

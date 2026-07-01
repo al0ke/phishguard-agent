@@ -79,7 +79,7 @@ export default function EmailHeaderAnalyzer() {
 
       const data = await response.json()
       setResult(data)
-    } catch (err) {
+    } catch {
       setError('Failed to analyze email headers. Please check the format and try again.')
     } finally {
       setIsLoading(false)

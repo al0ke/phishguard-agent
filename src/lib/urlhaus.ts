@@ -61,7 +61,18 @@ export async function checkURLhaus(url: string): Promise<URLhausResult | null> {
   }
 }
 
-export async function checkURLhausDomain(domain: string): Promise<any | null> {
+export interface URLhausHostResult {
+  query_status: string
+  urls?: Array<{
+    url: string
+    url_status: string
+    threat: string | null
+    date_added: string
+  }>
+  [key: string]: unknown
+}
+
+export async function checkURLhausDomain(domain: string): Promise<URLhausHostResult | null> {
   try {
     const response = await fetch(`https://urlhaus-api.abuse.ch/v1/lookup/host/${domain}/`, {
       headers: {

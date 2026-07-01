@@ -1,19 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
+import jsqr from 'jsqr'
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { imageData, width, height } = body
-    
+
     if (!imageData || !width || !height) {
       return NextResponse.json(
         { error: 'Image data, width, and height are required' },
         { status: 400 }
       )
     }
-    
-    const jsqr = require('jsqr')
-    
+
     const data = new Uint8ClampedArray(imageData)
     
     const code = jsqr(data, width, height, {

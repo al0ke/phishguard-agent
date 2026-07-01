@@ -9,7 +9,9 @@ async function dnsLookup(name: string, type: string): Promise<string[]> {
     )
     if (!res.ok) return []
     const data = await res.json()
-    return (data.Answer || []).filter((a: any) => a.data).map((a: any) => a.data)
+    return (data.Answer || [])
+      .filter((a: { data?: string }) => a.data)
+      .map((a: { data: string }) => a.data)
   } catch {
     return []
   }
@@ -48,7 +50,7 @@ async function getDomainAge(domain: string): Promise<{ created: string | null; a
     if (!res.ok) return { created: null, ageDays: null, registrar: null }
     const data = await res.json()
     const events = data.events || []
-    const regEvent = events.find((e: any) => e.eventAction === 'registration')
+    const regEvent = events.find((e: { eventAction?: string; eventDate?: string }) => e.eventAction === 'registration')
     const created = regEvent?.eventDate || null
     let ageDays = null
     if (created) {

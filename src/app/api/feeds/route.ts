@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+interface CisaVulnerability {
+  cveID?: string
+  vendorProject?: string
+  product?: string
+  vulnerabilityName?: string
+  dateAdded?: string
+}
+
 export async function GET(request: NextRequest) {
   const feed = request.nextUrl.searchParams.get('feed') || 'all'
 
-  const results: Record<string, any> = {}
+  const results: Record<string, unknown> = {}
 
   try {
     if (feed === 'all' || feed === 'cisa') {
@@ -17,7 +25,7 @@ export async function GET(request: NextRequest) {
           results.cisa = {
             count: data.count || data.vulnerabilities?.length || 0,
             title: data.title || 'CISA KEV Catalog',
-            recent: (data.vulnerabilities || []).slice(0, 10).map((v: any) => ({
+            recent: (data.vulnerabilities || []).slice(0, 10).map((v: CisaVulnerability) => ({
               cve: v.cveID,
               vendor: v.vendorProject,
               product: v.product,

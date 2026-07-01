@@ -2,6 +2,10 @@
 
 import { useState, useEffect } from 'react'
 
+function buildReportFilename(): string {
+  return `threat-report-${Date.now()}.txt`
+}
+
 interface ReportData {
   type: string
   target: string
@@ -12,7 +16,7 @@ interface ReportData {
   findings: string[]
   recommendations: string[]
   iocs?: { ips: string[]; domains: string[]; urls: string[]; hashes: string[] }
-  raw?: any
+  raw?: unknown
 }
 
 export default function ReportGenerator() {
@@ -58,7 +62,7 @@ export default function ReportGenerator() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `threat-report-${Date.now()}.txt`
+    a.download = buildReportFilename()
     a.click()
     URL.revokeObjectURL(url)
   }

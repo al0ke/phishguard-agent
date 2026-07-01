@@ -34,7 +34,6 @@ export function detectBrandImpersonation(url: string, emailContent?: string): Br
   try {
     const urlObj = new URL(url)
     const hostname = urlObj.hostname.toLowerCase().replace(/^www\./, '')
-    const pathParts = hostname.split('.')
     const domainParts = hostname.split('.')
     
     // Check all possible domain combinations
@@ -73,12 +72,7 @@ export function detectBrandImpersonation(url: string, emailContent?: string): Br
           if (pattern !== brandNameLower) {
             // Check for character substitutions (0 for o, 1 for l, etc)
             let hasSubstitution = false
-            const substitutions: Record<string, string[]> = {
-              'o': ['0'], 'l': ['1', 'i', 'I'], 'e': ['3'], 
-              'a': ['4', '@'], 's': ['5', '$'], 'i': ['1', 'l', '!'],
-              't': ['7'], 'b': ['8'], 'g': ['9']
-            }
-            
+
             for (let i = 0; i < pattern.length; i++) {
               const char = pattern[i]
               const originalChar = brandNameLower[i]

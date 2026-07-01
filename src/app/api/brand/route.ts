@@ -67,9 +67,7 @@ export async function POST(request: NextRequest) {
     }
 
     const cleanDomain = target.toLowerCase().replace(/^www\./, '').split('.')[0]
-    const fullDomain = target.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0]
     const normalized = normalizeHomoglyphs(cleanDomain)
-    const normalizedFull = normalizeHomoglyphs(fullDomain)
 
     const matches: Array<{ brand: string; similarity: number; homoglyphUsed: boolean; distance: number }> = []
 
