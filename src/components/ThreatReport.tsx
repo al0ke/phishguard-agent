@@ -1,5 +1,7 @@
 'use client'
 
+import { memo } from 'react'
+
 interface ThreatReportProps {
   result: {
     timestamp: string
@@ -55,7 +57,7 @@ interface ThreatReportProps {
   }
 }
 
-export default function ThreatReport({ result }: ThreatReportProps) {
+function ThreatReport({ result }: ThreatReportProps) {
   const colorMap: Record<string, {bg: string, border: string, text: string}> = {
     malicious: { bg: 'bg-[#ff3366]/10', border: 'border-[#ff3366]/50', text: 'text-[#ff3366]' },
     suspicious: { bg: 'bg-[#ffcc00]/10', border: 'border-[#ffcc00]/50', text: 'text-[#ffcc00]' },
@@ -272,3 +274,5 @@ export default function ThreatReport({ result }: ThreatReportProps) {
     </div>
   )
 }
+
+export default memo(ThreatReport)

@@ -1,11 +1,13 @@
 'use client'
 
+import { memo } from 'react'
+
 interface RiskGaugeProps {
   score: number
   threatLevel: 'critical' | 'high' | 'medium' | 'low' | 'safe'
 }
 
-export default function RiskGauge({ score, threatLevel }: RiskGaugeProps) {
+function RiskGauge({ score, threatLevel }: RiskGaugeProps) {
   const getColor = () => {
     switch (threatLevel) {
       case 'critical': return '#ff3366'
@@ -107,3 +109,5 @@ export default function RiskGauge({ score, threatLevel }: RiskGaugeProps) {
     </div>
   )
 }
+
+export default memo(RiskGauge)

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { memo } from 'react'
 import type { InvestigateTab } from '@/lib/analyzerProps'
 
 interface IOCListProps {
@@ -13,7 +13,7 @@ interface IOCListProps {
   onInvestigate?: (tab: InvestigateTab, value: string) => void
 }
 
-export default function IOCList({ iocs, onInvestigate }: IOCListProps) {
+function IOCList({ iocs, onInvestigate }: IOCListProps) {
   const allIocs = [
     ...iocs.ips.map(ip => ({ type: 'IP' as const, value: ip, tab: 'ip' as InvestigateTab })),
     ...iocs.domains.map(d => ({ type: 'Domain' as const, value: d, tab: 'domain' as InvestigateTab })),
@@ -139,3 +139,5 @@ export default function IOCList({ iocs, onInvestigate }: IOCListProps) {
     </div>
   )
 }
+
+export default memo(IOCList)
