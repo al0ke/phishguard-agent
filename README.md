@@ -52,9 +52,12 @@ Open [http://localhost:3000](http://localhost:3000) to start analyzing threats.
 
 ```env
 VIRUSTOTAL_API_KEY=your_api_key_here
+FIRECRAWL_API_KEY=your_firecrawl_key_here
+SUPABASE_URL=your_supabase_project_url
+SUPABASE_SERVICE_KEY=your_supabase_service_role_key
 ```
 
-> Note: The app includes a default VirusTotal API key for demonstration. For production use, replace it with your own key.
+> No API keys are hardcoded anywhere in the source — every external key is read from `process.env` on the server only. `VIRUSTOTAL_API_KEY` is required for the Hash and URL Scan tools; the rest are optional and each tool degrades gracefully with a clear message when its key is missing. `/api/ip-reputation` uses ip-api.com's free tier and needs no key at all.
 
 ## API Endpoints
 
@@ -117,8 +120,9 @@ Analyze a URL or email content for threats.
 
 | Source | Description | API Required |
 |--------|-------------|--------------|
-| [VirusTotal](https://www.virustotal.com) | Security vendor consensus | Yes (included) |
+| [VirusTotal](https://www.virustotal.com) | Security vendor consensus | Yes (set `VIRUSTOTAL_API_KEY`) |
 | [URLhaus](https://urlhaus-api.abuse.ch) | Malware URL database | No |
+| [ip-api.com](https://ip-api.com) | IP reputation — geolocation, ASN/ISP, proxy/VPN/hosting flags | No |
 | Brand Detection | Lookalike domain detection | No |
 
 ## Deployment
