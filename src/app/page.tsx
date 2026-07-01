@@ -16,6 +16,7 @@ import QrAnalyzer from '@/components/QrAnalyzer'
 import ThreatFeeds from '@/components/ThreatFeeds'
 import ReportGenerator from '@/components/ReportGenerator'
 import IpAnalyzer from '@/components/IpAnalyzer'
+import IpReputationCheck from '@/components/IpReputationCheck'
 import RedirectTracer from '@/components/RedirectTracer'
 import DnsLookup from '@/components/DnsLookup'
 import BulkScanner from '@/components/BulkScanner'
@@ -26,7 +27,7 @@ import URLVoidScanner from '@/components/URLVoidScanner'
 import { logAudit, saveLastResult } from '@/lib/analystClient'
 import type { InvestigateTab } from '@/lib/analyzerProps'
 
-type Tab = 'overview' | 'url' | 'domain' | 'hash' | 'email' | 'eml' | 'dns' | 'whois' | 'ip' | 'qr' | 'redirect' | 'bulk' | 'sanitize' | 'screenshot' | 'feeds' | 'talos' | 'urlvoid' | 'audit' | 'report'
+type Tab = 'overview' | 'url' | 'domain' | 'hash' | 'email' | 'eml' | 'dns' | 'whois' | 'ip' | 'ip-reputation' | 'qr' | 'redirect' | 'bulk' | 'sanitize' | 'screenshot' | 'feeds' | 'talos' | 'urlvoid' | 'audit' | 'report'
 
 interface AnalysisResult {
   timestamp: string
@@ -56,6 +57,7 @@ const tabs: { id: Tab; label: string; icon: string }[] = [
   { id: 'dns', label: 'DNS', icon: 'DNS' },
   { id: 'whois', label: 'WHOIS', icon: '📋' },
   { id: 'ip', label: 'IP Lookup', icon: '🌐' },
+  { id: 'ip-reputation', label: 'IP Reputation', icon: '🛰' },
   { id: 'qr', label: 'QR Code', icon: '📷' },
   { id: 'redirect', label: 'Redirect', icon: '↗' },
   { id: 'bulk', label: 'Bulk Scan', icon: '⚡' },
@@ -73,7 +75,6 @@ const tabOrder: Tab[] = tabs.map(t => t.id)
 export default function Home() {
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [scanPhase, setScanPhase] = useState<string>('idle')
   const [result, setResult] = useState<AnalysisResult | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [tabPrefill, setTabPrefill] = useState<{ tab: Tab; value: string } | null>(null)
@@ -93,7 +94,6 @@ export default function Home() {
     setIsAnalyzing(true)
     setError(null)
     setResult(null)
-    setScanPhase('scanning')
 
     try {
       const response = await fetch('/api/analyze', {
@@ -104,7 +104,6 @@ export default function Home() {
       if (!response.ok) throw new Error('Analysis failed')
       const data = await response.json()
       setResult(data)
-      setScanPhase('complete')
 
       const findings: string[] = [
         data.virusTotal ? `VirusTotal: ${data.virusTotal.malicious || 0} malicious` : '',
@@ -138,7 +137,6 @@ export default function Home() {
       })
     } catch {
       setError('Failed to analyze. Please try again.')
-      setScanPhase('idle')
     } finally {
       setIsAnalyzing(false)
     }
@@ -149,7 +147,6 @@ export default function Home() {
     if (tab !== 'url') {
       setResult(null)
       setError(null)
-      setScanPhase('idle')
     }
   }, [])
 
@@ -292,6 +289,7 @@ export default function Home() {
                   {activeTab === 'dns' && <DnsLookup {...shellProps} />}
                   {activeTab === 'whois' && <WhoisLookup {...shellProps} />}
                   {activeTab === 'ip' && <IpAnalyzer {...shellProps} />}
+                  {activeTab === 'ip-reputation' && <IpReputationCheck {...shellProps} />}
                   {activeTab === 'qr' && <QrAnalyzer {...shellProps} />}
                   {activeTab === 'redirect' && <RedirectTracer {...shellProps} />}
                   {activeTab === 'bulk' && <BulkScanner {...shellProps} />}
