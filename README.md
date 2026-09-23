@@ -173,6 +173,32 @@ phishguard/
 └── README.md
 ```
 
+## Phishing Hygiene Kit
+
+Public product page: **[/kit](./src/app/kit/page.tsx)** — **Email & Identity Hygiene Pilot** for Texas SMBs (&lt;250 employees).
+
+| | |
+|--|--|
+| **Offer** | Fixed-scope readiness pilot (~**$597**, **5 business days**) |
+| **Who** | Texas SMBs / lean IT / MSPs supporting those clients |
+| **Author** | Ali (al0ke) — experience with a Texas agency CISO office |
+| **Soft CTA** | Mailto / book a walkthrough (no Stripe checkout on the page) |
+
+Downloadable artifacts in `public/kit/`:
+
+- `mfa-email-hardening-checklist.md` — MFA, app passwords, forwarding/inbox-rules abuse, vendor verification
+- `phishing-readiness-scorecard.md` — 10-minute self-score (controls / people / process); not a certification
+- `sb-2610-plain-english-brief.md` — high-level Texas SB 2610 orientation + official Legislature links; **not legal advice**
+
+Income intent: productize PhishGuard into a short paid hygiene pilot while keeping free triage demo + kit downloads. Live demo: https://phishguard-plum.vercel.app · Repo: https://github.com/al0ke/phishguard-agent
+
+```bash
+npm run dev
+# open http://localhost:3000/kit
+```
+
+`/kit` is excluded from the app’s Basic Auth so the landing and markdown downloads stay public.
+
 ## Security Notes
 
 - Never enter real credentials on suspected phishing sites
@@ -185,4 +211,4 @@ MIT License - See LICENSE file for details.
 
 ---
 
-Built with 🔒 by PhishGuard Team
+Built with 🔒 by Ali (al0ke) / PhishGuard
