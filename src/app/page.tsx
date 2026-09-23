@@ -197,6 +197,12 @@ export default function Home() {
             </h1>
           </div>
           <div className="flex items-center gap-3">
+            <a
+              href="/kit"
+              className="text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-lg border border-[#00ccff]/30 text-[#00ccff] hover:bg-[#00ccff]/10 transition-colors"
+            >
+              Hygiene Kit
+            </a>
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#00ff88]/10 border border-[#00ff88]/30">
               <div className="w-2 h-2 rounded-full bg-[#00ff88] animate-pulse" />
               <span className="text-sm text-[#00ff88] font-medium">Online</span>
@@ -227,7 +233,13 @@ export default function Home() {
               </button>
             ))}
           </div>
-          <div className="p-3 border-t" style={{ borderColor: 'var(--cyber-border)' }}>
+          <div className="p-3 border-t space-y-2" style={{ borderColor: 'var(--cyber-border)' }}>
+            <a
+              href="/kit"
+              className="block text-xs text-center font-bold uppercase tracking-wider text-[#00ccff] hover:text-[#00ff88] transition-colors"
+            >
+              Email & Identity Pilot
+            </a>
             <div className="text-xs text-center" style={{ color: 'var(--text-muted)' }}>
               Analyst Toolkit<br />Defense Suite
             </div>
@@ -312,6 +324,10 @@ export default function Home() {
       <footer className="border-t py-2 flex-shrink-0" style={{ borderColor: 'var(--cyber-border)' }}>
         <div className="text-center text-xs" style={{ color: 'var(--text-muted)' }}>
           Analyst Toolkit v2.1
+          <span className="mx-2 opacity-40">·</span>
+          <a href="/kit" className="text-[#00ccff] hover:text-[#00ff88] transition-colors">
+            Hygiene Kit / Pilot
+          </a>
         </div>
       </footer>
       </div>

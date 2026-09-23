@@ -2,6 +2,13 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  // Public kit landing + downloadable artifacts (no Basic Auth)
+  if (pathname === '/kit' || pathname.startsWith('/kit/')) {
+    return NextResponse.next()
+  }
+
   const authHeader = request.headers.get('authorization')
 
   if (!authHeader || !authHeader.startsWith('Basic ')) {
